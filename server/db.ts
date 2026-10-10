@@ -511,8 +511,10 @@ export async function seedInitialData() {
   const salt = await bcrypt.genSalt(10);
   const adminPasswordHash = await bcrypt.hash('admin123', salt);
   const adminPinHash = await bcrypt.hash('1234', salt);
+  const saadPasswordHash = await bcrypt.hash('saad1289', salt);
+  const saadPinHash = await bcrypt.hash('1289', salt);
 
-  // ONLY 1 Admin, NO shops, NO owners initially
+  // Initial Super Admins
   const initialStores: StoreDoc[] = [];
   const initialUsers: UserDoc[] = [
     {
@@ -523,6 +525,31 @@ export async function seedInitialData() {
       email: 'admin@shoppos.com',
       passwordHash: adminPasswordHash,
       pinHash: adminPinHash,
+      role: 'SuperAdmin',
+      permissions: [
+        'pos.checkout',
+        'pos.discount',
+        'products.create',
+        'products.edit',
+        'products.delete',
+        'products.stock',
+        'sales.view',
+        'sales.refund',
+        'staff.manage',
+        'settings.update',
+        'stores.switch',
+      ],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      _id: 'usr_admin_saad',
+      storeId: '',
+      name: 'Super Admin (Saad)',
+      phone: '01915647290',
+      email: 'saad1289@shoppos.com',
+      passwordHash: saadPasswordHash,
+      pinHash: saadPinHash,
       role: 'SuperAdmin',
       permissions: [
         'pos.checkout',

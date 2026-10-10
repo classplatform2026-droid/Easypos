@@ -5,6 +5,8 @@ import {
   Phone,
   ArrowRight,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 
@@ -12,15 +14,9 @@ export const LoginScreen: React.FC = () => {
   const { loginWithCredentials, suspendedAlertMessage, sessionNoticeMessage, setSessionNoticeMessage } = usePos();
   const [number, setNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const fillCredentials = (num: string, pass: string) => {
-    setNumber(num);
-    setPassword(pass);
-    setError('');
-    setSessionNoticeMessage(null);
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,20 +115,34 @@ export const LoginScreen: React.FC = () => {
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
                 placeholder="Enter password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors focus:outline-none cursor-pointer"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2 cursor-pointer"
           >
             {loading ? (
               <span>Logging in...</span>
@@ -144,29 +154,6 @@ export const LoginScreen: React.FC = () => {
             )}
           </button>
         </form>
-
-        {/* Quick Demo Logins Helper */}
-        <div className="pt-3 text-center border-t border-slate-100 space-y-2">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-            Quick Fill Demo Accounts:
-          </p>
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => fillCredentials('01700000000', 'admin123')}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors"
-            >
-              Super Admin: 01700000000
-            </button>
-            <button
-              type="button"
-              onClick={() => fillCredentials('01839869478', '123456')}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors"
-            >
-              Shop Owner: 01839869478
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -67,6 +67,8 @@ async function runSeed() {
     const salt = await bcrypt.genSalt(10);
     const adminPassHash = await bcrypt.hash('admin123', salt);
     const adminPinHash = await bcrypt.hash('1234', salt);
+    const saadPassHash = await bcrypt.hash('saad1289', salt);
+    const saadPinHash = await bcrypt.hash('1289', salt);
     const ownerPassHash = await bcrypt.hash('123456', salt);
     const ownerPinHash = await bcrypt.hash('1234', salt);
 
@@ -174,8 +176,8 @@ async function runSeed() {
       );
     }
 
-    // 5. Seed SuperAdmin User
-    console.log('👤 Seeding SuperAdmin User...');
+    // 5. Seed SuperAdmin Users
+    console.log('👤 Seeding SuperAdmin Users...');
     const superAdmin = {
       _id: 'usr_admin',
       storeId: '',
@@ -202,8 +204,39 @@ async function runSeed() {
       createdAt: new Date().toISOString(),
     };
     await db.collection<any>('users').updateOne(
-      { email: 'admin@shoppos.com' },
+      { $or: [{ phone: '01700000000' }, { email: 'admin@shoppos.com' }] },
       { $set: superAdmin },
+      { upsert: true }
+    );
+
+    const superAdminSaad = {
+      _id: 'usr_admin_saad',
+      storeId: '',
+      name: 'Super Admin (Saad)',
+      phone: '01915647290',
+      email: 'saad1289@shoppos.com',
+      passwordHash: saadPassHash,
+      pinHash: saadPinHash,
+      role: 'SuperAdmin',
+      permissions: [
+        'pos.checkout',
+        'pos.discount',
+        'products.create',
+        'products.edit',
+        'products.delete',
+        'products.stock',
+        'sales.view',
+        'sales.refund',
+        'staff.manage',
+        'settings.update',
+        'stores.switch',
+      ],
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    };
+    await db.collection<any>('users').updateOne(
+      { $or: [{ phone: '01915647290' }, { email: 'saad1289@shoppos.com' }] },
+      { $set: superAdminSaad },
       { upsert: true }
     );
 
@@ -430,14 +463,21 @@ async function runSeed() {
     console.log('====================================================');
     console.log('🔐 LOGIN CREDENTIALS:');
     console.log('----------------------------------------------------');
-    console.log('1. Super Admin (Admin Console):');
+    console.log('1. Super Admin 1:');
+    console.log('   Mobile:   01700000000');
     console.log('   Email:    admin@shoppos.com');
     console.log('   Password: admin123');
     console.log('   PIN:      1234');
     console.log('');
-    console.log('2. Store Owner (POS Terminal):');
+    console.log('2. Super Admin 2 (Saad):');
+    console.log('   Mobile:   01915647290');
+    console.log('   Email:    saad1289@shoppos.com');
+    console.log('   Password: saad1289');
+    console.log('   PIN:      1289');
+    console.log('');
+    console.log('3. Store Owner (POS Terminal):');
+    console.log('   Mobile:   01812345678');
     console.log('   Email:    owner@shoppos.com');
-    console.log('   Phone:    01812345678');
     console.log('   Password: 123456');
     console.log('   PIN:      1234');
     console.log('----------------------------------------------------');
