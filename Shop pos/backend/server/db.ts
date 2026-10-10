@@ -16,8 +16,42 @@ import {
 } from './socket';
 import { cache } from './cache';
 
-const MONGODB_URI = process.env.MONGODB_URI || '';
-const DB_NAME = 'shoppos';
+const RAW_MONGODB_URI = process.env.MONGODB_URI || '';
+
+export function parseMongoConfig(rawUri: string, defaultDb = 'shopdb'): { uri: string; dbName: string } {
+  let uri = (rawUri || '').trim();
+  if (!uri) return { uri: '', dbName: defaultDb };
+
+  let dbName = process.env.MONGODB_DB_NAME || defaultDb;
+
+  // Handle format: mongodb+srv://...net/?appName=Cluster0/shopdb
+  if (uri.includes('/?appName=') && uri.includes('/')) {
+    const parts = uri.split('/?');
+    if (parts.length === 2 && parts[1].includes('/')) {
+      const sub = parts[1].split('/');
+      const query = sub[0];
+      const specifiedDb = sub.slice(1).join('/');
+      if (specifiedDb) {
+        dbName = specifiedDb;
+        uri = `${parts[0]}/${specifiedDb}?${query}`;
+      }
+    }
+  } else {
+    try {
+      const proto = uri.startsWith('mongodb+srv://') ? 'mongodb+srv://' : 'mongodb://';
+      const dummy = uri.replace(proto, 'http://');
+      const parsed = new URL(dummy);
+      const pathDb = parsed.pathname.replace(/^\//, '').trim();
+      if (pathDb) {
+        dbName = pathDb;
+      }
+    } catch {}
+  }
+
+  return { uri, dbName };
+}
+
+const { uri: MONGODB_URI, dbName: DB_NAME } = parseMongoConfig(RAW_MONGODB_URI);
 
 export function buildIdQuery(id: string | any) {
   if (!id) return { _id: id };
@@ -669,9 +703,31 @@ export async function initDatabase() {
       console.log(`[MongoDB] Connected successfully to remote MongoDB database: ${DB_NAME}`);
       try {
         await nativeDb.collection('audit_logs').createIndex({ timestamp: -1 });
+        await nativeDb.collection('users').createIndex({ email: 1 }, { unique: true, sparse: true });
+        await nativeDb.collection('users').createIndex({ storeId: 1, role: 1 });
+        await nativeDb.collection('stores').createIndex({ ownerId: 1 });
+        await nativeDb.collection('products').createIndex({ storeId: 1, barcode: 1 });
+        await nativeDb.collection('sales').createIndex({ storeId: 1, createdAt: -1 });
       } catch {
         // Ignore index creation error
       }
+
+      // Check if remote users collection is empty, and auto-seed initial data
+      try {
+        const usersCount = await nativeDb.collection('users').countDocuments();
+        if (usersCount === 0) {
+          console.log(`[MongoDB] Database "${DB_NAME}" is empty. Auto-seeding initial SuperAdmin and plans...`);
+          await nativeDb.collection('users').insertMany(initialData.initialUsers as any);
+          if (initialData.initialPlans.length > 0) {
+            await nativeDb.collection('plans').insertMany(initialData.initialPlans as any);
+          }
+          await nativeDb.collection('settings').insertOne(initialData.initialSettings as any);
+          console.log(`[MongoDB] Auto-seed complete.`);
+        }
+      } catch (seedErr) {
+        console.warn('[MongoDB] Auto-seed check failed:', seedErr);
+      }
+
       // Run initial 2-day purge
       await AuditRepo.purgeOlderThanDays(2).catch(() => {});
       return;
