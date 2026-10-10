@@ -2,8 +2,17 @@ import { Product, Sale, StoreInfo } from '../types';
 
 const TOKEN_KEY = 'shoppos_jwt_token';
 
+function formatBaseUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/$/, '');
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 // Support Render / standalone deployment where backend is on a separate domain
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL ? String(import.meta.env.VITE_API_URL) : '').replace(/\/$/, '');
+const API_BASE_URL = formatBaseUrl(typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL ? String(import.meta.env.VITE_API_URL) : '');
 
 export function getApiBaseUrl(): string {
   return API_BASE_URL;

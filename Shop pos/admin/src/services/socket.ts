@@ -29,7 +29,10 @@ export function connectSocket(token: string) {
   }
 
   currentToken = token;
-  const envApiUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL ? String(import.meta.env.VITE_API_URL) : '').replace(/\/$/, '');
+  const rawApiUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL ? String(import.meta.env.VITE_API_URL) : '').trim().replace(/\/$/, '');
+  const envApiUrl = rawApiUrl
+    ? (rawApiUrl.startsWith('http://') || rawApiUrl.startsWith('https://') ? rawApiUrl : `https://${rawApiUrl}`)
+    : '';
   const url = envApiUrl || (typeof window !== 'undefined' ? window.location.origin : '');
 
   socket = io(url, {
