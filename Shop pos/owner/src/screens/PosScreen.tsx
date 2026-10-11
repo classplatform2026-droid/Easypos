@@ -651,11 +651,11 @@ export const PosScreen: React.FC<PosScreenProps> = ({
 
       {/* Mobile Floating Cart Summary Button */}
       {cartItemCount > 0 && !isMobileCartOpen && (
-        <div className="md:hidden fixed bottom-16 left-3 right-3 z-30 animate-in fade-in slide-in-from-bottom-2">
+        <div className="md:hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-30 animate-in fade-in slide-in-from-bottom-2">
           <button
             type="button"
             onClick={() => setIsMobileCartOpen(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-3.5 shadow-xl flex items-center justify-between font-bold cursor-pointer"
+            className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white rounded-2xl p-3.5 shadow-xl flex items-center justify-between font-bold cursor-pointer transition-all"
           >
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center">

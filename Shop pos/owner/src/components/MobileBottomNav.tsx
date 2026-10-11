@@ -21,15 +21,16 @@ export const MobileBottomNav: React.FC = () => {
   const visibleNavItems = navItems.filter((item) => isPageEnabled(item.id));
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 z-40 flex items-center justify-around shadow-lg">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] z-40 flex items-center justify-around shadow-lg">
       {visibleNavItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeScreen === item.id;
         return (
           <button
             key={item.id}
+            type="button"
             onClick={() => setActiveScreen(item.id)}
-            className={`flex flex-col items-center justify-center flex-1 py-1 transition-all select-none relative ${
+            className={`flex flex-col items-center justify-center flex-1 min-h-[44px] py-1 transition-all select-none relative cursor-pointer active:scale-95 ${
               isActive ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
             }`}
           >

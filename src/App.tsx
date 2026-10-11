@@ -13,6 +13,7 @@ import { SalesScreen } from './screens/SalesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { AdminLayout } from './admin/AdminLayout';
+import { ShopMasterLoader } from './components/ShopMasterLoader';
 
 const MainLayout: React.FC = () => {
   const {
@@ -24,11 +25,22 @@ const MainLayout: React.FC = () => {
     storeInfo,
     subscriptionExpired,
     isPageEnabled,
+    isInitialLoading,
   } = usePos();
 
   const [headerSearch, setHeaderSearch] = useState('');
   const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
   const [adminViewMode, setAdminViewMode] = useState<'admin' | 'pos'>('admin');
+  const [appReady, setAppReady] = useState(false);
+
+  if (!appReady) {
+    return (
+      <ShopMasterLoader
+        isLoading={isInitialLoading}
+        onComplete={() => setAppReady(true)}
+      />
+    );
+  }
 
   if (!currentUser) {
     return <LoginScreen />;

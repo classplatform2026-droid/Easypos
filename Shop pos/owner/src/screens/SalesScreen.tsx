@@ -78,22 +78,23 @@ export const SalesScreen: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+      {/* Summary KPI Cards - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-400">Total Volume</span>
-          <p className="text-base sm:text-xl font-mono font-extrabold text-slate-900 mt-1 tabular-nums">
+          <span className="text-[11px] font-bold text-slate-400">Total Volume (মোট বিক্রি)</span>
+          <p className="text-lg sm:text-xl font-mono font-black text-slate-900 mt-1 tabular-nums">
             {storeInfo.currency} {currentSalesTotal.toLocaleString()}
           </p>
         </div>
         <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-400">Completed Orders</span>
-          <p className="text-base sm:text-xl font-mono font-extrabold text-blue-600 mt-1 tabular-nums">
+          <span className="text-[11px] font-bold text-slate-400">Completed Orders (অর্ডার)</span>
+          <p className="text-lg sm:text-xl font-mono font-black text-blue-600 mt-1 tabular-nums">
             {completedCount}
           </p>
         </div>
         <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs">
-          <span className="text-[11px] font-medium text-slate-400">Avg Ticket Size</span>
-          <p className="text-base sm:text-xl font-mono font-extrabold text-emerald-600 mt-1 tabular-nums">
+          <span className="text-[11px] font-bold text-slate-400">Avg Ticket Size (গড় বিক্রি)</span>
+          <p className="text-lg sm:text-xl font-mono font-black text-emerald-600 mt-1 tabular-nums">
             {storeInfo.currency} {avgOrderValue.toLocaleString()}
           </p>
         </div>
@@ -180,36 +181,40 @@ export const SalesScreen: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
                     <div className="text-right">
-                      <div className="text-sm sm:text-base font-bold font-mono text-slate-900 tabular-nums">
+                      <div className="text-xs sm:text-base font-bold font-mono text-slate-900 tabular-nums">
                         {storeInfo.currency} {sale.total.toLocaleString()}
                       </div>
-                      <div className="text-[11px] text-slate-400">by {sale.cashierName}</div>
+                      <div className="text-[10px] sm:text-[11px] text-slate-400 truncate max-w-[80px] sm:max-w-none">
+                        by {sale.cashierName}
+                      </div>
                     </div>
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedSaleForReceipt(sale);
                       }}
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl hidden sm:flex"
+                      className="p-1.5 sm:p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 active:scale-95 rounded-xl transition-all"
+                      title="Print Receipt"
                     >
                       <Printer className="w-4 h-4" />
                     </button>
                     {!isRefunded && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setRefundError(null);
                           setSaleToRefund(sale);
                         }}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl hidden sm:flex"
+                        className="p-1.5 sm:p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 rounded-xl transition-all"
                         title="Refund this sale"
                       >
                         <RotateCcw className="w-4 h-4" />
                       </button>
                     )}
-                    <ArrowRight className="w-4 h-4 text-slate-300 sm:hidden" />
                   </div>
                 </div>
               );

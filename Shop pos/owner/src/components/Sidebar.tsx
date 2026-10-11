@@ -8,10 +8,19 @@ import {
   Store,
   PanelLeftClose,
   PanelLeftOpen,
+  X,
 } from 'lucide-react';
 import { usePos, ScreenType } from '../context/PosContext';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({
+  mobileOpen = false,
+  onCloseMobile,
+}) => {
   const {
     activeScreen,
     setActiveScreen,
@@ -35,12 +44,117 @@ export const Sidebar: React.FC = () => {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
+  const handleNavClick = (id: ScreenType) => {
+    setActiveScreen(id);
+    if (onCloseMobile) onCloseMobile();
+  };
+
   return (
-    <aside
-      className={`hidden md:flex flex-col bg-white border-r border-slate-200/80 h-screen sticky top-0 shrink-0 select-none z-30 transition-all duration-300 ease-in-out ${
-        isSidebarCollapsed ? 'w-20' : 'w-56 lg:w-64'
-      }`}
-    >
+    <>
+      {/* Mobile Drawer (Slide-out menu on phone/tablet) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-xs flex">
+          <div className="w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 h-18 border-b border-slate-100">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
+                  <Store className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col overflow-hidden min-w-0">
+                  <span className="font-bold text-base text-slate-900 tracking-tight leading-tight truncate">
+                    ShopPOS
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 truncate">
+                    {storeInfo.name}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mobile Nav Links */}
+            <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeScreen === item.id;
+                const isEnabled = isPageEnabled(item.id);
+
+                if (!isEnabled) {
+                  return (
+                    <div
+                      key={item.id}
+                      className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-xs text-slate-400 bg-slate-50 border border-dashed border-slate-200 opacity-60 cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5 text-slate-400 shrink-0" />
+                        <span className="line-through">{item.label}</span>
+                      </div>
+                      <span className="text-[9px] font-bold">OFF</span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-semibold text-sm transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Mobile Store Profile Card in Footer */}
+            <div className="p-3 border-t border-slate-100 bg-slate-50/70">
+              <div className="p-2.5 rounded-xl border border-slate-200/80 bg-white flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  {storeInfo.name ? storeInfo.name.charAt(0) : 'S'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-slate-900 truncate">{storeInfo.name}</p>
+                  <p className="text-[10px] text-slate-500 truncate">{storeInfo.branch}</p>
+                </div>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              </div>
+            </div>
+          </div>
+          {/* Backdrop click to close */}
+          <div className="flex-1" onClick={onCloseMobile} />
+        </div>
+      )}
+
+      {/* Desktop Persistent Sidebar */}
+      <aside
+        className={`hidden md:flex flex-col bg-white border-r border-slate-200/80 h-screen sticky top-0 shrink-0 select-none z-30 transition-all duration-300 ease-in-out ${
+          isSidebarCollapsed ? 'w-20' : 'w-56 lg:w-64'
+        }`}
+      >
       {/* Header with Shop Logo and PC Toggle Button */}
       <div
         className={`flex items-center h-18 border-b border-slate-100 transition-all ${
@@ -185,5 +299,6 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
     </aside>
+  </>
   );
 };

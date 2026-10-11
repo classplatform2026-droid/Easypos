@@ -29,6 +29,7 @@ const MainLayout: React.FC = () => {
   const [headerSearch, setHeaderSearch] = useState('');
   const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
   const [adminViewMode, setAdminViewMode] = useState<'admin' | 'pos'>('admin');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   if (!currentUser) {
     return <LoginScreen />;
@@ -66,7 +67,10 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900 overflow-hidden font-sans">
-      <Sidebar />
+      <Sidebar
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <TopHeader
@@ -74,6 +78,7 @@ const MainLayout: React.FC = () => {
           searchValue={headerSearch}
           onSearchChange={handleHeaderSearchChange}
           onBarcodeScanClick={() => setBarcodeModalOpen(true)}
+          onOpenMobileMenu={() => setMobileSidebarOpen(true)}
         />
 
         {isPlatformAdmin && adminViewMode === 'pos' && (

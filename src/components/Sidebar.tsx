@@ -5,11 +5,11 @@ import {
   Package,
   Receipt,
   Settings,
-  Store,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { usePos, ScreenType } from '../context/PosContext';
+import { ShopMasterLogo } from './ShopMasterLogo';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -48,8 +48,8 @@ export const Sidebar: React.FC = () => {
         }`}
       >
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs shrink-0">
-            <Store className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0 p-1">
+            <ShopMasterLogo size={28} />
           </div>
           {!isSidebarCollapsed && (
             <div className="flex flex-col overflow-hidden min-w-0">

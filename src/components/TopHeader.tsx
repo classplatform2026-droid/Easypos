@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { playSound } from '../utils/sound';
+import { ShopMasterLogo } from './ShopMasterLogo';
 
 interface TopHeaderProps {
   searchPlaceholder?: string;
@@ -257,19 +258,21 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200/80 px-4 sm:px-6 h-18 flex items-center justify-between sticky top-0 z-20">
-      {/* Mobile Header Left: Brand info only */}
-      <div className="flex items-center gap-2.5 md:hidden">
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-2xs">
-          <Store className="w-4 h-4" />
-        </div>
-        <div className="min-w-0">
-          <span className="font-bold text-slate-900 text-sm leading-tight block truncate">
-            ShopPOS
-          </span>
-          <span className="text-[10px] text-slate-500 font-medium leading-none truncate block">
-            {storeInfo.name}
-          </span>
+    <header className="bg-white border-b border-slate-200/80 px-3 sm:px-6 h-18 flex items-center justify-between sticky top-0 z-20">
+      {/* Mobile Header Left: Brand info */}
+      <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shrink-0 shadow-2xs p-1">
+            <ShopMasterLogo size={22} />
+          </div>
+          <div className="min-w-0">
+            <span className="font-bold text-slate-900 text-sm leading-tight block truncate">
+              ShopPOS
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium leading-none truncate block">
+              {storeInfo.name}
+            </span>
+          </div>
         </div>
       </div>
 

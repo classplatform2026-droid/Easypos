@@ -37,6 +37,7 @@ interface PosContextType {
   setSelectedSaleForReceipt: (sale: Sale | null) => void;
   dbStatus: DbStatusResponse | null;
   isLoading: boolean;
+  isInitialLoading: boolean;
   socketConnected: boolean;
   suspendedAlertMessage: string | null;
   setSuspendedAlertMessage: (msg: string | null) => void;
@@ -155,6 +156,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [dbStatus, setDbStatus] = useState<DbStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [activeScreen, setActiveScreen] = useState<ScreenType>('dashboard');
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [selectedSaleForReceipt, setSelectedSaleForReceipt] = useState<Sale | null>(null);
@@ -177,75 +179,79 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const token = getStoredToken();
       if (!token) {
         setIsLoading(false);
+        setIsInitialLoading(false);
         return;
       }
 
-      api.getStore().then((res) => {
-        if (res && res.store) {
-          setStoreInfo(res.store);
-          setSubscriptionExpired(res.store.subscription?.status === 'expired');
-        }
-      }).catch((err) => console.warn('[MongoDB] Store fetch notice:', err.message));
+      await Promise.allSettled([
+        api.getStore().then((res) => {
+          if (res && res.store) {
+            setStoreInfo(res.store);
+            setSubscriptionExpired(res.store.subscription?.status === 'expired');
+          }
+        }).catch((err) => console.warn('[MongoDB] Store fetch notice:', err.message)),
 
-      api.getCategories().then((res) => {
-        if (res.categories) setCategories(res.categories);
-      }).catch((err) => console.warn('[MongoDB] Categories fetch notice:', err.message));
+        api.getCategories().then((res) => {
+          if (res.categories) setCategories(res.categories);
+        }).catch((err) => console.warn('[MongoDB] Categories fetch notice:', err.message)),
 
-      api.getProducts().then((res) => {
-        if (res.products) setProducts(res.products);
-      }).catch((err) => console.warn('[MongoDB] Products fetch notice:', err.message));
+        api.getProducts().then((res) => {
+          if (res.products) setProducts(res.products);
+        }).catch((err) => console.warn('[MongoDB] Products fetch notice:', err.message)),
 
-      api.getSales().then((res) => {
-        if (res.sales) setSales(res.sales);
-      }).catch((err) => console.warn('[MongoDB] Sales fetch notice:', err.message));
+        api.getSales().then((res) => {
+          if (res.sales) setSales(res.sales);
+        }).catch((err) => console.warn('[MongoDB] Sales fetch notice:', err.message)),
 
-      api.getMe().then((res) => {
-        if (res.user) {
-          const normalizedUser: StaffUser = {
-            id: res.user._id,
-            storeId: res.user.storeId,
-            name: res.user.name,
-            email: res.user.email,
-            role: res.user.role,
-            avatarInitials: res.user.name.charAt(0).toUpperCase(),
-            pin: res.user.pin,
-            permissions: res.user.permissions,
-            status: res.user.status,
-            phone: res.user.phone,
-            lastLogin: res.user.lastLogin,
-          };
-          setCurrentUser(normalizedUser);
-          try {
-            localStorage.setItem('shoppos_current_user', JSON.stringify(normalizedUser));
-          } catch {}
-        }
-      }).catch((err) => {
-        console.warn('[MongoDB] User profile notice:', err.message);
-        if (err.status === 401 || (err.message && err.message.includes('User account no longer exists'))) {
-          setSessionNoticeMessage(err.message || 'User account no longer exists. Please sign in again.');
-          logoutUser();
-        }
-      });
+        api.getMe().then((res) => {
+          if (res.user) {
+            const normalizedUser: StaffUser = {
+              id: res.user._id,
+              storeId: res.user.storeId,
+              name: res.user.name,
+              email: res.user.email,
+              role: res.user.role,
+              avatarInitials: res.user.name.charAt(0).toUpperCase(),
+              pin: res.user.pin,
+              permissions: res.user.permissions,
+              status: res.user.status,
+              phone: res.user.phone,
+              lastLogin: res.user.lastLogin,
+            };
+            setCurrentUser(normalizedUser);
+            try {
+              localStorage.setItem('shoppos_current_user', JSON.stringify(normalizedUser));
+            } catch {}
+          }
+        }).catch((err) => {
+          console.warn('[MongoDB] User profile notice:', err.message);
+          if (err.status === 401 || (err.message && err.message.includes('User account no longer exists'))) {
+            setSessionNoticeMessage(err.message || 'User account no longer exists. Please sign in again.');
+            logoutUser();
+          }
+        }),
 
-      api.getUsers().then((res) => {
-        if (res.users) {
-          setStaffUsers(res.users.map((u) => ({
-            id: u._id,
-            storeId: u.storeId,
-            name: u.name,
-            email: u.email,
-            role: u.role,
-            avatarInitials: u.name.charAt(0).toUpperCase(),
-            pin: u.pin,
-            permissions: u.permissions,
-            status: u.status,
-            phone: u.phone,
-            lastLogin: u.lastLogin,
-          })));
-        }
-      }).catch((err) => console.warn('[MongoDB] Staff users notice:', err.message));
+        api.getUsers().then((res) => {
+          if (res.users) {
+            setStaffUsers(res.users.map((u) => ({
+              id: u._id,
+              storeId: u.storeId,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+              avatarInitials: u.name.charAt(0).toUpperCase(),
+              pin: u.pin,
+              permissions: u.permissions,
+              status: u.status,
+              phone: u.phone,
+              lastLogin: u.lastLogin,
+            })));
+          }
+        }).catch((err) => console.warn('[MongoDB] Staff users notice:', err.message)),
+      ]);
     } finally {
       setIsLoading(false);
+      setIsInitialLoading(false);
     }
   }, []);
 
@@ -750,6 +756,7 @@ export const PosProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedSaleForReceipt,
         dbStatus,
         isLoading,
+        isInitialLoading,
         socketConnected,
         suspendedAlertMessage,
         setSuspendedAlertMessage,
