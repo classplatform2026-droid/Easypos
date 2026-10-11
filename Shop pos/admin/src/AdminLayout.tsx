@@ -21,7 +21,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onSwitchToOwnerPos }) 
   const { currentUser, logoutUser } = usePos();
   const [currentTab, setCurrentTab] = useState<AdminTab>('dashboard');
   const [headerSearch, setHeaderSearch] = useState('');
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [selectedShopIdForDetails, setSelectedShopIdForDetails] = useState<string | null>(null);
   const [selectedPaymentForReview, setSelectedPaymentForReview] = useState<any | null>(null);
   const [openPaymentAddModal, setOpenPaymentAddModal] = useState(false);
@@ -91,8 +90,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onSwitchToOwnerPos }) 
         adminRole={currentUser?.role || 'Super Admin'}
         onLogout={logoutUser}
         onSwitchToOwnerPos={onSwitchToOwnerPos}
-        mobileOpen={mobileSidebarOpen}
-        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
@@ -105,7 +102,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onSwitchToOwnerPos }) 
           notifications={adminNotifications}
           onReviewPayment={(payment) => handleNavigateToPayments(payment)}
           onNavigateToShops={(shopId) => handleNavigateToShops(shopId)}
-          onOpenMobileMenu={() => setMobileSidebarOpen(true)}
         />
 
         <main className="flex-1 overflow-y-auto pb-24 md:pb-6">

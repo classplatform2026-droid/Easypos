@@ -22,8 +22,8 @@ import {
   ChevronUp,
   RefreshCw,
 } from 'lucide-react';
-import { api } from '../../services/api';
-import { usePos } from '../../context/PosContext';
+import { api } from '../services/api';
+import { usePos } from '../context/PosContext';
 import { AdminStoreItem } from '../types';
 
 interface AdminShopsScreenProps {

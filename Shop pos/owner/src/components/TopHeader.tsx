@@ -20,17 +20,16 @@ import {
   Layers,
   Receipt,
   Sparkles,
-  Menu,
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { playSound } from '../utils/sound';
+import { ShopMasterLogo } from './ShopMasterLogo';
 
 interface TopHeaderProps {
   searchPlaceholder?: string;
   searchValue?: string;
   onSearchChange?: (val: string) => void;
   onBarcodeScanClick?: () => void;
-  onOpenMobileMenu?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -38,7 +37,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   searchValue = '',
   onSearchChange,
   onBarcodeScanClick,
-  onOpenMobileMenu,
 }) => {
   const {
     currentUser,
@@ -261,20 +259,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
   return (
     <header className="bg-white border-b border-slate-200/80 px-3 sm:px-6 h-18 flex items-center justify-between sticky top-0 z-20">
-      {/* Mobile Header Left: Menu Button & Brand */}
+      {/* Mobile Header Left: Brand info */}
       <div className="flex items-center gap-2 md:hidden">
-        <button
-          type="button"
-          onClick={onOpenMobileMenu}
-          className="p-2 -ml-1 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-          aria-label="Open sidebar menu"
-          title="Open menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-2xs">
-            <Store className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shrink-0 shadow-2xs p-1">
+            <ShopMasterLogo size={22} />
           </div>
           <div className="min-w-0">
             <span className="font-bold text-slate-900 text-sm leading-tight block truncate">

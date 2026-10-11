@@ -13,6 +13,7 @@ import { SalesScreen } from './screens/SalesScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { AdminLayout } from './admin/AdminLayout';
+import { ShopMasterLoader } from './components/ShopMasterLoader';
 
 const MainLayout: React.FC = () => {
   const {
@@ -24,12 +25,22 @@ const MainLayout: React.FC = () => {
     storeInfo,
     subscriptionExpired,
     isPageEnabled,
+    isInitialLoading,
   } = usePos();
 
   const [headerSearch, setHeaderSearch] = useState('');
   const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
   const [adminViewMode, setAdminViewMode] = useState<'admin' | 'pos'>('admin');
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [appReady, setAppReady] = useState(false);
+
+  if (!appReady) {
+    return (
+      <ShopMasterLoader
+        isLoading={isInitialLoading}
+        onComplete={() => setAppReady(true)}
+      />
+    );
+  }
 
   if (!currentUser) {
     return <LoginScreen />;
@@ -67,10 +78,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900 overflow-hidden font-sans">
-      <Sidebar
-        mobileOpen={mobileSidebarOpen}
-        onCloseMobile={() => setMobileSidebarOpen(false)}
-      />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <TopHeader
@@ -78,7 +86,6 @@ const MainLayout: React.FC = () => {
           searchValue={headerSearch}
           onSearchChange={handleHeaderSearchChange}
           onBarcodeScanClick={() => setBarcodeModalOpen(true)}
-          onOpenMobileMenu={() => setMobileSidebarOpen(true)}
         />
 
         {isPlatformAdmin && adminViewMode === 'pos' && (

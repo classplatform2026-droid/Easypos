@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Store,
   Lock,
   Phone,
   ArrowRight,
@@ -9,6 +8,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
+import { ShopMasterLogo } from '../components/ShopMasterLogo';
 
 export const LoginScreen: React.FC = () => {
   const { loginWithCredentials, suspendedAlertMessage, sessionNoticeMessage, setSessionNoticeMessage } = usePos();
@@ -48,8 +48,8 @@ export const LoginScreen: React.FC = () => {
       <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Brand logo & title */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-md shadow-blue-500/20">
-            <Store className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center mx-auto shadow-md shadow-blue-500/10 p-2">
+            <ShopMasterLogo size={42} />
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">

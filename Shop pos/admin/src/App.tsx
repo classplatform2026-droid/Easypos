@@ -2,10 +2,21 @@ import React, { useState } from 'react';
 import { PosProvider, usePos } from './context/PosContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { AdminLayout } from './AdminLayout';
+import { ShopMasterLoader } from './components/ShopMasterLoader';
 
 const AdminPortalApp: React.FC = () => {
-  const { currentUser } = usePos();
+  const { currentUser, isInitialLoading } = usePos();
   const [viewMode, setViewMode] = useState<'admin'>('admin');
+  const [appReady, setAppReady] = useState(false);
+
+  if (!appReady) {
+    return (
+      <ShopMasterLoader
+        isLoading={isInitialLoading}
+        onComplete={() => setAppReady(true)}
+      />
+    );
+  }
 
   if (!currentUser) {
     return <LoginScreen />;

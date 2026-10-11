@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check, Edit2, X } from 'lucide-react';
-import { api } from '../../services/api';
+import { api } from '../services/api';
 import { AdminPlanItem } from '../types';
 
 interface AdminSubscriptionsScreenProps {

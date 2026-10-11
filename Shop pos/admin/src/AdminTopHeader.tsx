@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
   Bell,
-  Menu,
   Store,
   Database,
   CheckCheck,
@@ -13,7 +12,8 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { DbOptimizationModal } from '../components/DbOptimizationModal';
+import { DbOptimizationModal } from './components/DbOptimizationModal';
+import { ShopMasterLogo } from './components/ShopMasterLogo';
 
 export interface AdminNotification {
   id: string;
@@ -33,7 +33,6 @@ interface AdminTopHeaderProps {
   adminName?: string;
   adminRole?: string;
   notifications?: AdminNotification[];
-  onOpenMobileMenu?: () => void;
   onReviewPayment?: (payment: any) => void;
   onNavigateToShops?: (shopId?: string) => void;
 }
@@ -45,7 +44,6 @@ export const AdminTopHeader: React.FC<AdminTopHeaderProps> = ({
   adminName = 'Admin Manager',
   adminRole = 'Super Admin',
   notifications = [],
-  onOpenMobileMenu,
   onReviewPayment,
   onNavigateToShops,
 }) => {
@@ -94,23 +92,13 @@ export const AdminTopHeader: React.FC<AdminTopHeaderProps> = ({
 
   return (
     <header className="h-14 sm:h-16 bg-white border-b border-slate-200/80 px-3 sm:px-6 flex items-center justify-between shrink-0 z-20 gap-2">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onOpenMobileMenu}
-          className="md:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
-          aria-label="Open sidebar menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-1.5 md:hidden">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0">
-            <Store className="w-3.5 h-3.5" />
-          </div>
-          <span className="font-extrabold text-slate-900 text-sm tracking-tight hidden xs:inline">
-            ShopPOS
-          </span>
+      <div className="flex items-center gap-1.5 md:hidden">
+        <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 p-1">
+          <ShopMasterLogo size={20} />
         </div>
+        <span className="font-extrabold text-slate-900 text-sm tracking-tight inline">
+          ShopPOS
+        </span>
       </div>
 
       <div className="relative flex-1 max-w-[180px] xs:max-w-[240px] sm:max-w-xs md:max-w-md">
