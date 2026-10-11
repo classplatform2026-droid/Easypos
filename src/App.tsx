@@ -14,6 +14,7 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { AdminLayout } from './admin/AdminLayout';
 import { ShopMasterLoader } from './components/ShopMasterLoader';
+import { InstallPwaModal } from './components/InstallPwaModal';
 
 const MainLayout: React.FC = () => {
   const {
@@ -186,6 +187,7 @@ const MainLayout: React.FC = () => {
         />
       )}
       {renderContent()}
+      <InstallPwaModal />
     </>
   );
 };

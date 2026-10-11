@@ -103,10 +103,10 @@ export const ShopMasterLoader: React.FC<ShopMasterLoaderProps> = ({
       aria-live="polite"
       aria-label="Loading ShopMaster"
     >
-      <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 flex items-center justify-center p-2">
+      <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 flex items-center justify-center p-2">
         <ShopMasterLogo
           size="100%"
-          className="w-full h-full drop-shadow-xs"
+          className="w-full h-full drop-shadow-sm"
           animated={!isExiting}
         />
       </div>

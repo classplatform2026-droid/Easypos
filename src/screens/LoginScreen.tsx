@@ -48,8 +48,8 @@ export const LoginScreen: React.FC = () => {
       <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Brand logo & title */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center mx-auto shadow-md shadow-blue-500/10 p-2">
-            <ShopMasterLogo size={42} />
+          <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center mx-auto shadow-md shadow-blue-500/10 p-2">
+            <ShopMasterLogo size={52} />
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">

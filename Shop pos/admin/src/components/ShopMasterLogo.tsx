@@ -80,32 +80,32 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
           <style>{`
             @keyframes smRevealSpeed1 {
               0% {
-                -webkit-clip-path: inset(0 100% 0 0 round 16px);
-                clip-path: inset(0 100% 0 0 round 16px);
+                -webkit-clip-path: inset(0 100% 0 0 round 18px);
+                clip-path: inset(0 100% 0 0 round 18px);
                 opacity: 0;
               }
               15% {
                 opacity: 1;
               }
               100% {
-                -webkit-clip-path: inset(0 0% 0 0 round 16px);
-                clip-path: inset(0 0% 0 0 round 16px);
+                -webkit-clip-path: inset(0 0% 0 0 round 18px);
+                clip-path: inset(0 0% 0 0 round 18px);
                 opacity: 1;
               }
             }
 
             @keyframes smRevealSpeed2 {
               0% {
-                -webkit-clip-path: inset(0 100% 0 0 round 16px);
-                clip-path: inset(0 100% 0 0 round 16px);
+                -webkit-clip-path: inset(0 100% 0 0 round 18px);
+                clip-path: inset(0 100% 0 0 round 18px);
                 opacity: 0;
               }
               15% {
                 opacity: 1;
               }
               100% {
-                -webkit-clip-path: inset(0 0% 0 0 round 16px);
-                clip-path: inset(0 0% 0 0 round 16px);
+                -webkit-clip-path: inset(0 0% 0 0 round 18px);
+                clip-path: inset(0 0% 0 0 round 18px);
                 opacity: 1;
               }
             }
@@ -116,7 +116,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
                 clip-path: inset(0 100% 0 0);
                 opacity: 0;
               }
-              12% {
+              20% {
                 opacity: 1;
               }
               100% {
@@ -145,15 +145,15 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
             }
 
             .${id}-speed1 {
-              -webkit-clip-path: inset(0 100% 0 0 round 16px);
-              clip-path: inset(0 100% 0 0 round 16px);
+              -webkit-clip-path: inset(0 100% 0 0 round 18px);
+              clip-path: inset(0 100% 0 0 round 18px);
               opacity: 0;
               animation: smRevealSpeed1 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards;
             }
 
             .${id}-speed2 {
-              -webkit-clip-path: inset(0 100% 0 0 round 16px);
-              clip-path: inset(0 100% 0 0 round 16px);
+              -webkit-clip-path: inset(0 100% 0 0 round 18px);
+              clip-path: inset(0 100% 0 0 round 18px);
               opacity: 0;
               animation: smRevealSpeed2 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.32s forwards;
             }
@@ -190,57 +190,60 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
         )}
       </defs>
 
-      {/* 1. Horizontal Speed Line 1 (Upper Pill) */}
-      <rect
-        x="48"
-        y="160"
-        width="120"
-        height="32"
-        rx="16"
-        fill={`url(#${id}-speed1)`}
-        className={animated ? `${id}-speed1` : undefined}
-      />
-
-      {/* 2. Horizontal Speed Line 2 (Lower Pill) */}
-      <rect
-        x="94"
-        y="214"
-        width="106"
-        height="32"
-        rx="16"
-        fill={`url(#${id}-speed2)`}
-        className={animated ? `${id}-speed2` : undefined}
-      />
-
-      {/* 3. Main Blue Shopping-Cart-Like Geometric Shape */}
-      <g className={animated ? `${id}-cart` : undefined}>
-        {/* 3a. Lower Fin / Fold */}
-        <path
-          d="M 252 270 C 255 292 268 328 288 357 C 291 361 297 364 302 361 C 304 360 306 357 308 354 L 362 270 Z"
-          fill={`url(#${id}-cart-fin)`}
+      {/* Scaled & Centered Geometry: viewBox 500x500 with generous presence */}
+      <g transform="translate(250, 250) scale(1.18) translate(-250, -250)">
+        {/* 1. Horizontal Speed Line 1 (Upper Pill) */}
+        <rect
+          x="36"
+          y="156"
+          width="132"
+          height="36"
+          rx="18"
+          fill={`url(#${id}-speed1)`}
+          className={animated ? `${id}-speed1` : undefined}
         />
 
-        {/* 3b. Left Trapezoid Body */}
-        <path
-          d="M 198 132 L 332 132 L 362 270 L 254 270 L 184 148 C 182 144 182 139 185 135 C 188 132 193 132 198 132 Z"
-          fill={`url(#${id}-cart-left)`}
+        {/* 2. Horizontal Speed Line 2 (Lower Pill) */}
+        <rect
+          x="88"
+          y="216"
+          width="118"
+          height="36"
+          rx="18"
+          fill={`url(#${id}-speed2)`}
+          className={animated ? `${id}-speed2` : undefined}
         />
 
-        {/* 3c. Right Cyan-Blue Triangular Wing */}
-        <path
-          d="M 332 132 L 416 132 C 423 132 429 137 430 144 C 431 148 429 152 426 156 L 362 270 Z"
-          fill={`url(#${id}-cart-right)`}
+        {/* 3. Main Blue Shopping-Cart-Like Geometric Shape */}
+        <g className={animated ? `${id}-cart` : undefined}>
+          {/* 3a. Lower Fin / Fold */}
+          <path
+            d="M 252 270 C 255 292 268 328 288 357 C 291 361 297 364 302 361 C 304 360 306 357 308 354 L 362 270 Z"
+            fill={`url(#${id}-cart-fin)`}
+          />
+
+          {/* 3b. Left Trapezoid Body */}
+          <path
+            d="M 198 132 L 332 132 L 362 270 L 254 270 L 184 148 C 182 144 182 139 185 135 C 188 132 193 132 198 132 Z"
+            fill={`url(#${id}-cart-left)`}
+          />
+
+          {/* 3c. Right Cyan-Blue Triangular Wing */}
+          <path
+            d="M 332 132 L 416 132 C 423 132 429 137 430 144 C 431 148 429 152 426 156 L 362 270 Z"
+            fill={`url(#${id}-cart-right)`}
+          />
+        </g>
+
+        {/* 4. Circular Blue Element (Wheel) */}
+        <circle
+          cx="206"
+          cy="309"
+          r="40"
+          fill={`url(#${id}-wheel)`}
+          className={animated ? `${id}-wheel` : undefined}
         />
       </g>
-
-      {/* 4. Circular Blue Element (Wheel) */}
-      <circle
-        cx="206"
-        cy="309"
-        r="38"
-        fill={`url(#${id}-wheel)`}
-        className={animated ? `${id}-wheel` : undefined}
-      />
     </svg>
   );
 };

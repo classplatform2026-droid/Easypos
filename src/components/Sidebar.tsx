@@ -48,8 +48,8 @@ export const Sidebar: React.FC = () => {
         }`}
       >
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0 p-1">
-            <ShopMasterLogo size={28} />
+          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center shadow-xs shrink-0 p-1">
+            <ShopMasterLogo size={34} />
           </div>
           {!isSidebarCollapsed && (
             <div className="flex flex-col overflow-hidden min-w-0">

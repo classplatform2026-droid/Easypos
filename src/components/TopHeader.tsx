@@ -262,8 +262,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       {/* Mobile Header Left: Brand info */}
       <div className="flex items-center gap-2 md:hidden">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center shrink-0 shadow-2xs p-1">
-            <ShopMasterLogo size={22} />
+          <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center shrink-0 shadow-xs p-1">
+            <ShopMasterLogo size={28} />
           </div>
           <div className="min-w-0">
             <span className="font-bold text-slate-900 text-sm leading-tight block truncate">
