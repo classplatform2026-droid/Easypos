@@ -11,7 +11,7 @@ export interface ShopMasterLoaderProps {
    */
   onComplete?: () => void;
   /**
-   * Minimum time to allow the reveal sequence to complete (default: 1600ms)
+   * Duration in ms for the progressive reveal sequence + hold (default: 1800ms)
    */
   minDuration?: number;
 }
@@ -20,15 +20,16 @@ export interface ShopMasterLoaderProps {
  * Premium ShopMaster Progressive Reveal Loading Animation
  *
  * Sequence:
- * 1. Two horizontal speed lines reveal one by one
- * 2. Main blue shopping-cart faceted shape reveals from left to right
- * 3. Circular blue element reveals last
- * 4. Briefly holds the fully assembled logo, then transitions smoothly
+ * 1. Two horizontal speed lines reveal one by one (0.08s - 0.70s)
+ * 2. Main blue shopping-cart faceted geometric shape reveals from left to right (0.58s - 1.20s)
+ * 3. Circular blue element reveals last (1.10s - 1.48s)
+ * 4. Briefly holds the fully assembled logo (1.48s - 1.85s)
+ * 5. Smoothly dissolves/exits from the loading page into the dashboard
  */
 export const ShopMasterLoader: React.FC<ShopMasterLoaderProps> = ({
   isLoading = true,
   onComplete,
-  minDuration = 1600,
+  minDuration = 1800,
 }) => {
   const [animationFinished, setAnimationFinished] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -43,33 +44,51 @@ export const ShopMasterLoader: React.FC<ShopMasterLoaderProps> = ({
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (prefersReducedMotion) {
-      setAnimationFinished(true);
-      return;
+      // Immediate quick exit for users who prefer reduced motion
+      const quickExitTimer = setTimeout(() => {
+        setIsExiting(true);
+      }, 300);
+      return () => clearTimeout(quickExitTimer);
     }
 
-    const timer = setTimeout(() => {
+    // Run progressive reveal sequence and brief assembled display
+    const animTimer = setTimeout(() => {
       setAnimationFinished(true);
     }, minDuration);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(animTimer);
   }, [minDuration]);
 
-  // When animation has completed and background loading is done, transition smoothly
+  // "Loading animation ses hole loading page teke ber hobe"
+  // When animation finishes, immediately begin exit!
+  // If background data loading is still running, allow max 300ms, then exit unconditionally.
   useEffect(() => {
-    if (animationFinished && !isLoading && !isExiting && !isRemoved) {
-      setIsExiting(true);
+    if (!animationFinished || isExiting || isRemoved) return;
 
+    if (!isLoading) {
+      setIsExiting(true);
+    } else {
+      const fallbackTimer = setTimeout(() => {
+        setIsExiting(true);
+      }, 300);
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [animationFinished, isLoading, isExiting, isRemoved]);
+
+  // Smooth cross-dissolve fade-out
+  useEffect(() => {
+    if (isExiting && !isRemoved) {
       const exitTimer = setTimeout(() => {
         setIsRemoved(true);
         if (!completionCalledRef.current) {
           completionCalledRef.current = true;
           onComplete?.();
         }
-      }, 400); // 400ms smooth fade-out
+      }, 450); // 450ms smooth fade-out
 
       return () => clearTimeout(exitTimer);
     }
-  }, [animationFinished, isLoading, isExiting, isRemoved, onComplete]);
+  }, [isExiting, isRemoved, onComplete]);
 
   if (isRemoved) {
     return null;
@@ -77,7 +96,7 @@ export const ShopMasterLoader: React.FC<ShopMasterLoaderProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-100 bg-white flex items-center justify-center select-none transition-opacity duration-400 ease-out ${
+      className={`fixed inset-0 z-[9999] bg-white flex items-center justify-center select-none transition-opacity duration-450 ease-out ${
         isExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
       role="status"
@@ -88,7 +107,7 @@ export const ShopMasterLoader: React.FC<ShopMasterLoaderProps> = ({
         <ShopMasterLogo
           size="100%"
           className="w-full h-full drop-shadow-xs"
-          animated={!animationFinished}
+          animated={!isExiting}
         />
       </div>
     </div>

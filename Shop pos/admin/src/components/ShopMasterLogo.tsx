@@ -80,6 +80,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
           <style>{`
             @keyframes smRevealSpeed1 {
               0% {
+                -webkit-clip-path: inset(0 100% 0 0 round 16px);
                 clip-path: inset(0 100% 0 0 round 16px);
                 opacity: 0;
               }
@@ -87,6 +88,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
                 opacity: 1;
               }
               100% {
+                -webkit-clip-path: inset(0 0% 0 0 round 16px);
                 clip-path: inset(0 0% 0 0 round 16px);
                 opacity: 1;
               }
@@ -94,6 +96,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
 
             @keyframes smRevealSpeed2 {
               0% {
+                -webkit-clip-path: inset(0 100% 0 0 round 16px);
                 clip-path: inset(0 100% 0 0 round 16px);
                 opacity: 0;
               }
@@ -101,6 +104,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
                 opacity: 1;
               }
               100% {
+                -webkit-clip-path: inset(0 0% 0 0 round 16px);
                 clip-path: inset(0 0% 0 0 round 16px);
                 opacity: 1;
               }
@@ -108,6 +112,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
 
             @keyframes smRevealCart {
               0% {
+                -webkit-clip-path: inset(0 100% 0 0);
                 clip-path: inset(0 100% 0 0);
                 opacity: 0;
               }
@@ -115,6 +120,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
                 opacity: 1;
               }
               100% {
+                -webkit-clip-path: inset(0 0% 0 0);
                 clip-path: inset(0 0% 0 0);
                 opacity: 1;
               }
@@ -122,6 +128,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
 
             @keyframes smRevealWheel {
               0% {
+                -webkit-clip-path: inset(0 100% 0 0 round 50%);
                 clip-path: inset(0 100% 0 0 round 50%);
                 opacity: 0;
                 transform: scale(0.65);
@@ -130,6 +137,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
                 opacity: 1;
               }
               100% {
+                -webkit-clip-path: inset(0 0% 0 0 round 50%);
                 clip-path: inset(0 0% 0 0 round 50%);
                 opacity: 1;
                 transform: scale(1);
@@ -137,27 +145,32 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
             }
 
             .${id}-speed1 {
+              -webkit-clip-path: inset(0 100% 0 0 round 16px);
               clip-path: inset(0 100% 0 0 round 16px);
               opacity: 0;
               animation: smRevealSpeed1 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards;
             }
 
             .${id}-speed2 {
+              -webkit-clip-path: inset(0 100% 0 0 round 16px);
               clip-path: inset(0 100% 0 0 round 16px);
               opacity: 0;
               animation: smRevealSpeed2 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.32s forwards;
             }
 
             .${id}-cart {
+              -webkit-clip-path: inset(0 100% 0 0);
               clip-path: inset(0 100% 0 0);
               opacity: 0;
               animation: smRevealCart 0.62s cubic-bezier(0.2, 1, 0.3, 1) 0.58s forwards;
             }
 
             .${id}-wheel {
+              -webkit-clip-path: inset(0 100% 0 0 round 50%);
               clip-path: inset(0 100% 0 0 round 50%);
               opacity: 0;
-              transform-origin: 206px 309px;
+              transform-box: fill-box;
+              transform-origin: center;
               animation: smRevealWheel 0.38s cubic-bezier(0.34, 1.45, 0.64, 1) 1.1s forwards;
             }
 
@@ -166,6 +179,7 @@ export const ShopMasterLogo: React.FC<ShopMasterLogoProps> = ({
               .${id}-speed2,
               .${id}-cart,
               .${id}-wheel {
+                -webkit-clip-path: none !important;
                 clip-path: none !important;
                 opacity: 1 !important;
                 transform: none !important;
