@@ -3,6 +3,7 @@ import { PosProvider, usePos } from './context/PosContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { AdminLayout } from './AdminLayout';
 import { ShopMasterLoader } from './components/ShopMasterLoader';
+import { InstallPwaModal } from './components/InstallPwaModal';
 
 const AdminPortalApp: React.FC = () => {
   const { currentUser, isInitialLoading } = usePos();
@@ -53,6 +54,7 @@ const AdminPortalApp: React.FC = () => {
         />
       )}
       {renderContent()}
+      <InstallPwaModal />
     </>
   );
 };

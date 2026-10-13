@@ -20,6 +20,7 @@ import {
   Layers,
   Receipt,
   Sparkles,
+  Camera,
 } from 'lucide-react';
 import { usePos } from '../context/PosContext';
 import { playSound } from '../utils/sound';
@@ -298,11 +299,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           />
           {onBarcodeScanClick && isFeatureEnabled('feat_barcode_scanner') && (
             <button
+              type="button"
               onClick={onBarcodeScanClick}
-              title="Scan or enter barcode"
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors shadow-2xs"
+              title="Camera Barcode Reader (ক্যামেরা বারকোড রিডার)"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
             >
-              <span className="font-mono text-[10px]">SCAN</span>
+              <Camera className="w-3.5 h-3.5 text-blue-600" />
+              <span>বারকোড</span>
             </button>
           )}
         </div>

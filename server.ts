@@ -87,13 +87,13 @@ async function startServer() {
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`[ShopPOS Server] Serving POS web app with Realtime WebSockets at http://0.0.0.0:${PORT}`);
 
-    // Recurring auto-purge: purge audit & system events older than 2 days every 1 hour
-    const PURGE_INTERVAL_MS = 60 * 60 * 1000;
+    // Recurring auto-purge: purge audit & system events older than 90 days every 24 hours
+    const PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
     setInterval(async () => {
       try {
-        await AuditRepo.purgeOlderThanDays(2);
+        await AuditRepo.purgeOlderThanDays(90);
       } catch (err) {
-        console.warn('[AuditPurge] Error during periodic 2-day audit purge:', err);
+        console.warn('[AuditPurge] Error during periodic 90-day audit purge:', err);
       }
     }, PURGE_INTERVAL_MS);
   });

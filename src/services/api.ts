@@ -579,6 +579,25 @@ export const api = {
     );
   },
 
+  async deleteAdminStore(storeId: string, adminPassword?: string) {
+    return request<{ success: boolean; message: string }>(
+      `/api/admin/stores/${storeId}`,
+      {
+        method: 'DELETE',
+        body: adminPassword ? JSON.stringify({ adminPassword }) : undefined,
+      }
+    );
+  },
+
+  async deleteAdminPlan(planId: string) {
+    return request<{ success: boolean; message: string }>(
+      `/api/admin/plans/${planId}`,
+      {
+        method: 'DELETE',
+      }
+    );
+  },
+
   async getAdminPlans() {
     return request<any>('/api/admin/plans');
   },
