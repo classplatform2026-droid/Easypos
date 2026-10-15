@@ -19,6 +19,45 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      // Suppress harmless Vite HMR WebSocket connection errors in preview iframe (per Environment Constraints: HMR is disabled)
+      (function() {
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+          const combined = args.map(a => (a instanceof Error ? (a.message + '\n' + (a.stack || '')) : String(a || ''))).join(' ');
+          if (
+            combined.includes('WebSocket closed without opened') ||
+            combined.includes('[vite] WebSocket') ||
+            (combined.includes('WebSocket') && combined.includes('@vite/client'))
+          ) {
+            return;
+          }
+          originalConsoleError.apply(console, args);
+        };
+
+        window.addEventListener('error', function(e) {
+          const msg = e ? String(e.message || '') : '';
+          const file = e ? String(e.filename || '') : '';
+          if (
+            msg.includes('WebSocket') ||
+            msg.includes('closed without opened') ||
+            file.includes('@vite/client')
+          ) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(e) {
+          const reasonStr = e ? String(e.reason?.message || e.reason || '') : '';
+          if (reasonStr.includes('WebSocket') || reasonStr.includes('closed without opened')) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+          }
+        }, true);
+      })();
+    </script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased font-sans selection:bg-blue-100 selection:text-blue-900">
     <div id="root"></div>

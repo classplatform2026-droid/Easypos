@@ -1,6 +1,10 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+if (process.env.DISABLE_HMR === undefined) {
+  process.env.DISABLE_HMR = 'true';
+}
+
 const isTsxRunning =
   process.execArgv.some((arg) => arg.includes('tsx')) ||
   process.env.__TSX_RUNNING__ === '1';

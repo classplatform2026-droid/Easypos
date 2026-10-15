@@ -17,18 +17,17 @@ export async function startServer() {
   console.log('[ShopPOS Server] Initializing Socket.IO realtime connection engine...');
   initSocketIO(httpServer);
 
-  const PORT = parseInt(process.env.PORT || '3000', 10);
+  const PORT = process.env.RENDER ? parseInt(process.env.PORT || '3000', 10) : 3000;
   const isProd = process.env.NODE_ENV === 'production';
 
-  app.use(
-    cors({
-      origin: true,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    })
-  );
-  app.options('*', cors());
+  const corsMiddleware = cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  });
+  app.use(corsMiddleware);
+  app.options('*', corsMiddleware);
 
   app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -70,12 +69,11 @@ export async function startServer() {
   });
 
   if (!isProd) {
-    const isHmrDisabled = process.env.DISABLE_HMR === 'true';
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        hmr: isHmrDisabled ? false : { server: httpServer },
-        watch: isHmrDisabled ? null : {},
+        hmr: false,
+        watch: null,
         allowedHosts: true,
       },
       appType: 'spa',
