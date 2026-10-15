@@ -51,8 +51,12 @@ adminRouter.get('/metrics', async (_req: AuthRequest, res: Response) => {
           id: st._id,
           name: st.name,
           owner: owner?.name || 'Store Owner',
-          plan: st.subscription?.plan || 'Pro',
+          phone: owner?.phone || st.phone || '',
+          branch: st.branch || 'Main Branch',
+          plan: st.subscription?.plan || 'Standard',
           status: st.status,
+          subscription: st.subscription,
+          expiryDate: st.subscription?.expiryDate || st.subscription?.endDate || null,
           created: st.createdAt
             ? new Date(st.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
             : 'Oct 02, 2026',
@@ -492,6 +496,48 @@ adminRouter.post('/stores/:storeId/extend-subscription', async (req: AuthRequest
     });
   } catch {
     return res.status(500).json({ error: 'Failed to extend subscription.' });
+  }
+});
+
+adminRouter.post('/stores/:storeId/adjust-expiry', async (req: AuthRequest, res: Response) => {
+  try {
+    const { storeId } = req.params;
+    const { daysChange, exactExpiryDate } = req.body;
+
+    const adminUser = {
+      id: req.user?._id || 'admin_console',
+      name: req.user?.name || 'Admin Manager',
+    };
+
+    const updated = await StoreRepo.adjustSubscriptionExpiry(
+      storeId,
+      {
+        daysChange: daysChange !== undefined && daysChange !== null ? Number(daysChange) : undefined,
+        exactExpiryDate: exactExpiryDate ? String(exactExpiryDate) : undefined,
+      },
+      adminUser
+    );
+
+    if (!updated) return res.status(404).json({ error: 'Store not found.' });
+
+    cache.invalidateStores(storeId);
+    cache.invalidatePayments();
+
+    const formattedDate = updated.subscription?.expiryDate
+      ? new Date(updated.subscription.expiryDate).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+      : '';
+
+    return res.json({
+      success: true,
+      message: `Subscription expiry for "${updated.name}" updated to ${formattedDate}.`,
+      store: updated,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to adjust subscription expiry.' });
   }
 });
 

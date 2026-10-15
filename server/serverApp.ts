@@ -69,6 +69,23 @@ export async function startServer() {
   app.use('/api/admin', adminRouter);
   app.use('/api', posRouter);
 
+  // Route-level fallback for database offline errors
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (
+      err.name === 'MongooseError' ||
+      err.name === 'MongoNetworkError' ||
+      err.name === 'MongoServerSelectionError' ||
+      (err.message && (err.message.includes('buffering timed out') || err.message.includes('failed to connect to server')))
+    ) {
+      console.warn('[AI Studio] Database offline — returning fallback response');
+      if (req.method === 'GET') {
+        return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : {});
+      }
+      return res.status(503).json({ error: 'Service temporarily unavailable (database offline)' });
+    }
+    next(err);
+  });
+
   if (!isProd) {
     console.log('[ShopPOS Server] Attaching Vite development middleware...');
     const vite = await createViteServer({

@@ -1031,42 +1031,88 @@ export const StoreRepo = {
   },
 
   async extendSubscription(storeId: string, days = 30, adminUser?: { id: string; name: string }): Promise<StoreDoc | null> {
+    return this.adjustSubscriptionExpiry(storeId, { daysChange: days }, adminUser);
+  },
+
+  async adjustSubscriptionExpiry(
+    storeId: string,
+    options: { daysChange?: number; exactExpiryDate?: string },
+    adminUser?: { id: string; name: string }
+  ): Promise<StoreDoc | null> {
     const store = await StoreRepo.getStore(storeId);
     if (!store) return null;
 
-    const currentExpiry = store.subscription?.expiryDate ? new Date(store.subscription.expiryDate).getTime() : 0;
-    const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-    const newExpiry = new Date(baseTime + days * 86400000).toISOString();
+    const currentExpiryMs = store.subscription?.expiryDate
+      ? new Date(store.subscription.expiryDate).getTime()
+      : Date.now();
+
+    let newExpiryTimeMs: number;
+    if (options.exactExpiryDate) {
+      newExpiryTimeMs = new Date(options.exactExpiryDate).getTime();
+    } else if (typeof options.daysChange === 'number') {
+      newExpiryTimeMs = currentExpiryMs + options.daysChange * 86400000;
+    } else {
+      newExpiryTimeMs = currentExpiryMs;
+    }
+
+    if (isNaN(newExpiryTimeMs)) {
+      throw new Error('Invalid date or days adjustment value');
+    }
+
+    const newExpiryIso = new Date(newExpiryTimeMs).toISOString();
+    const isNowExpired = newExpiryTimeMs <= Date.now();
+    const newStatus = isNowExpired
+      ? 'expired'
+      : (store.subscription?.status === 'suspended' ? 'suspended' : 'active');
 
     const updatedSub: StoreSubscription = {
       ...(store.subscription || {
-        plan: 'Professional',
+        plan: 'Standard',
         startDate: new Date().toISOString(),
         billingCycle: 'monthly',
         amount: 999,
       }),
-      status: 'active',
-      endDate: newExpiry,
-      expiryDate: newExpiry,
-      paymentStatus: 'approved',
+      status: newStatus,
+      expiryDate: newExpiryIso,
+      endDate: newExpiryIso,
+      paymentStatus: isNowExpired ? 'pending' : 'approved',
     };
 
-    const updated = await StoreRepo.updateStore(storeId, { status: 'active', subscription: updatedSub });
+    const storeUpdates: Partial<StoreDoc> = {
+      subscription: updatedSub,
+    };
+    if (newStatus === 'active' && store.status === 'suspended') {
+      storeUpdates.status = 'active';
+    }
+
+    const updated = await StoreRepo.updateStore(storeId, storeUpdates);
+
+    const changeDescription = options.exactExpiryDate
+      ? `set expiry date to ${new Date(newExpiryIso).toLocaleDateString()}`
+      : `${options.daysChange && options.daysChange >= 0 ? '+' : ''}${options.daysChange} days`;
 
     await AuditRepo.log({
       storeId,
       adminId: adminUser?.id || 'admin_console',
       userId: adminUser?.id || 'admin_console',
       userName: adminUser?.name || 'Super Admin',
-      action: 'SUBSCRIPTION_EXTENDED',
+      action: 'SUBSCRIPTION_EXPIRY_ADJUSTED',
       targetStoreId: storeId,
-      newValue: { expiryDate: newExpiry, days },
-      details: `Admin extended subscription by ${days} days for store "${store.name}"`,
+      previousValue: { expiryDate: store.subscription?.expiryDate, status: store.subscription?.status },
+      newValue: { expiryDate: newExpiryIso, status: newStatus },
+      details: `Admin adjusted subscription expiry (${changeDescription}) for store "${store.name}"`,
     });
 
     cache.invalidateStores(storeId);
-    emitAccountActivated(storeId);
-    emitSubscriptionUpdated(storeId, updatedSub);
+    cache.invalidatePayments();
+
+    if (newStatus === 'expired') {
+      emitSubscriptionExpired(storeId);
+    } else if (newStatus === 'active') {
+      emitAccountActivated(storeId);
+      emitSubscriptionUpdated(storeId, updatedSub);
+    }
+
     return updated;
   },
 

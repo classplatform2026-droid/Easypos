@@ -128,6 +128,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ onSwitchToOwnerPos }) 
               onReviewPayment={(payment) => handleNavigateToPayments(payment)}
               onAddPayment={() => handleNavigateToPayments(undefined, true)}
               onSwitchToOwnerPos={onSwitchToOwnerPos}
+              onShowToast={showToast}
             />
           )}
 

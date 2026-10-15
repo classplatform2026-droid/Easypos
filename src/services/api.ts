@@ -579,6 +579,19 @@ export const api = {
     );
   },
 
+  async adminAdjustSubscriptionExpiry(
+    storeId: string,
+    payload: { daysChange?: number; exactExpiryDate?: string }
+  ) {
+    return request<{ success: boolean; message: string; store: any }>(
+      `/api/admin/stores/${storeId}/adjust-expiry`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
   async deleteAdminStore(storeId: string, adminPassword?: string) {
     return request<{ success: boolean; message: string }>(
       `/api/admin/stores/${storeId}`,

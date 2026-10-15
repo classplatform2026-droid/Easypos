@@ -22,10 +22,12 @@ import {
   ChevronUp,
   RefreshCw,
   Trash2,
+  CalendarClock,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { usePos } from '../../context/PosContext';
 import { AdminStoreItem } from '../types';
+import { AdjustExpiryModal, ExpiryStoreTarget } from '../components/AdjustExpiryModal';
 
 interface AdminShopsScreenProps {
   initialSelectedShopId?: string | null;
@@ -95,6 +97,32 @@ export const AdminShopsScreen: React.FC<AdminShopsScreenProps> = ({
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [deleteAdminPassword, setDeleteAdminPassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Adjust Expiry Modal State
+  const [expiryModalOpen, setExpiryModalOpen] = useState(false);
+  const [selectedStoreForExpiry, setSelectedStoreForExpiry] = useState<ExpiryStoreTarget | null>(null);
+
+  const handleOpenExpiryModal = (store: any) => {
+    setSelectedStoreForExpiry({
+      id: store._id || store.id,
+      name: store.name,
+      branch: store.branch,
+      owner: store.ownerName || store.owner,
+      ownerName: store.ownerName || store.owner,
+      phone: store.phone,
+      plan: store.subscription?.plan || store.plan,
+      subscription: store.subscription,
+      expiryDate: store.subscription?.expiryDate || store.subscription?.endDate || store.expiryDate,
+    });
+    setExpiryModalOpen(true);
+  };
+
+  const handleExpirySuccess = (updatedStore: any) => {
+    fetchStores();
+    if (selectedShopId && (selectedShopId === updatedStore._id || selectedShopId === updatedStore.id)) {
+      loadShopDetails(selectedShopId);
+    }
+  };
 
   const fetchStores = async () => {
     try {
@@ -439,21 +467,64 @@ export const AdminShopsScreen: React.FC<AdminShopsScreenProps> = ({
 
           {/* Subscription & Performance */}
           <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-3.5">
-            <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-purple-600" />
-              <span>Subscription & Activity</span>
+            <h2 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-purple-600" />
+                <span>Subscription & Expiry</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => handleOpenExpiryModal(store)}
+                className="text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 border border-indigo-200 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                title="Increase or Decrease Expiry Date"
+              >
+                <CalendarClock className="w-3.5 h-3.5" />
+                <span>+/- Expiry</span>
+              </button>
             </h2>
             <div className="space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-slate-400 block text-[10px] font-bold uppercase">Active Plan</span>
-                  <span className="text-sm font-black text-slate-900">{store.subscription?.plan || 'Pro'}</span>
+                  <span className="text-sm font-black text-slate-900">{store.subscription?.plan || 'Standard'}</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {store.subscription?.status?.toUpperCase() || 'ACTIVE'}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+
+              {/* Expiry Date Display Banner */}
+              <div className="bg-slate-50 p-2.5 rounded-xl flex items-center justify-between border border-slate-200/60">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-bold uppercase">Expire Date</span>
+                  <span className="font-extrabold text-slate-800 text-xs">
+                    {store.subscription?.expiryDate
+                      ? new Date(store.subscription.expiryDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : 'No date set'}
+                  </span>
+                </div>
+                <div>
+                  {store.subscription?.expiryDate && (
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        new Date(store.subscription.expiryDate).getTime() > Date.now()
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {new Date(store.subscription.expiryDate).getTime() > Date.now()
+                        ? `${Math.round((new Date(store.subscription.expiryDate).getTime() - Date.now()) / 86400000)}d left`
+                        : 'Expired'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                 <div className="bg-slate-50 p-2.5 rounded-xl text-center">
                   <span className="text-[10px] text-slate-500 block font-bold uppercase">Total Orders</span>
                   <span className="text-base font-black text-slate-900">{metrics?.totalOrders || 0}</span>
@@ -600,6 +671,26 @@ export const AdminShopsScreen: React.FC<AdminShopsScreenProps> = ({
                   <span className="font-mono text-blue-600 font-bold">{s.phone}</span>
                 </div>
 
+                {s.subscription?.expiryDate && (
+                  <div className="flex items-center justify-between px-2 text-[11px] text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <CalendarClock className="w-3 h-3 text-slate-400" />
+                      <span>Exp: {new Date(s.subscription.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </span>
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+                        new Date(s.subscription.expiryDate).getTime() > Date.now()
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {new Date(s.subscription.expiryDate).getTime() > Date.now()
+                        ? `${Math.round((new Date(s.subscription.expiryDate).getTime() - Date.now()) / 86400000)}d left`
+                        : 'Expired'}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-end gap-1.5 pt-1">
                   <button
                     type="button"
@@ -608,6 +699,15 @@ export const AdminShopsScreen: React.FC<AdminShopsScreenProps> = ({
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
                     <span>POS</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenExpiryModal(s)}
+                    className="py-1.5 px-2.5 text-xs font-bold text-indigo-700 bg-indigo-50 active:bg-indigo-100 border border-indigo-200 rounded-xl flex items-center justify-center gap-1 cursor-pointer"
+                    title="Adjust Expiry"
+                  >
+                    <CalendarClock className="w-3.5 h-3.5" />
+                    <span>+/-</span>
                   </button>
                   <button
                     type="button"
@@ -687,6 +787,15 @@ export const AdminShopsScreen: React.FC<AdminShopsScreenProps> = ({
                         >
                           <ShoppingBag className="w-3 h-3" />
                           <span>POS</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenExpiryModal(s)}
+                          title="Increase or Decrease Expiry Date"
+                          className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 border border-indigo-200 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <CalendarClock className="w-3 h-3" />
+                          <span>+/- Expiry</span>
                         </button>
                         <button
                           type="button"
@@ -1254,6 +1363,18 @@ export const AdminShopsScreen: React.FC<AdminShopsScreenProps> = ({
           </div>
         </div>
       )}
+
+      {/* Adjust Expiry Modal */}
+      <AdjustExpiryModal
+        isOpen={expiryModalOpen}
+        store={selectedStoreForExpiry}
+        onClose={() => {
+          setExpiryModalOpen(false);
+          setSelectedStoreForExpiry(null);
+        }}
+        onSuccess={handleExpirySuccess}
+        onShowToast={onShowToast}
+      />
     </div>
   );
 };
