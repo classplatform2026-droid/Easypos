@@ -76,6 +76,7 @@ export async function startServer() {
         middlewareMode: true,
         hmr: isHmrDisabled ? false : { server: httpServer },
         watch: isHmrDisabled ? null : {},
+        allowedHosts: true,
       },
       appType: 'spa',
     });

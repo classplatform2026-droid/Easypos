@@ -15,12 +15,12 @@ import {
   emitUserUpdated,
 } from './socket';
 import { cache } from './cache';
+const DEFAULT_MONGODB_URI = 'mongodb+srv://mdmutasimbillahsaad_db_user:QGSKlkxhnhkPJwFz@cluster0.j29uko9.mongodb.net/shopdb?appName=Cluster0';
+const RAW_MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
 
-const RAW_MONGODB_URI = process.env.MONGODB_URI || '';
-
-export function parseMongoConfig(rawUri: string, defaultDb = 'posdb'): { uri: string; dbName: string } {
-  let uri = (rawUri || '').trim();
-  if (!uri) return { uri: '', dbName: defaultDb };
+export function parseMongoConfig(rawUri: string, defaultDb = 'shopdb'): { uri: string; dbName: string } {
+  let uri = (rawUri || DEFAULT_MONGODB_URI).trim();
+  if (!uri) return { uri: DEFAULT_MONGODB_URI, dbName: defaultDb };
 
   let dbName = process.env.MONGODB_DB_NAME || '';
 
@@ -740,7 +740,7 @@ export async function initDatabase() {
 
   const currentRawUri = process.env.MONGODB_URI || RAW_MONGODB_URI;
   if (currentRawUri && currentRawUri.trim()) {
-    const config = parseMongoConfig(currentRawUri, 'posdb');
+    const config = parseMongoConfig(currentRawUri, 'shopdb');
     MONGODB_URI = config.uri;
     DB_NAME = config.dbName;
   }
@@ -749,10 +749,10 @@ export async function initDatabase() {
     try {
       console.log(`[MongoDB] Attempting connection to MongoDB database: "${DB_NAME}"...`);
       mongoClient = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 3000,
-        connectTimeoutMS: 4000,
+        serverSelectionTimeoutMS: 15000,
+        connectTimeoutMS: 15000,
         maxPoolSize: 50,
-        minPoolSize: 1,
+        minPoolSize: 0,
         maxIdleTimeMS: 30000,
       });
       await mongoClient.connect();
@@ -771,17 +771,34 @@ export async function initDatabase() {
         // Ignore index creation error
       }
 
-      // Check if remote users collection is empty, and auto-seed initial data
+      // Check if remote users or stores collection is empty, and auto-seed initial data
       try {
         const usersCount = await nativeDb.collection('users').countDocuments();
-        if (usersCount === 0) {
-          console.log(`[MongoDB] Database "${DB_NAME}" is empty. Auto-seeding initial SuperAdmin and plans...`);
-          await nativeDb.collection('users').insertMany(initialData.initialUsers as any);
-          if (initialData.initialPlans.length > 0) {
+        const storesCount = await nativeDb.collection('stores').countDocuments();
+        if (usersCount === 0 || storesCount === 0) {
+          console.log(`[MongoDB] Database "${DB_NAME}" missing initial records. Auto-seeding initial users, store, and plans...`);
+          await loadLocalDb(initialData);
+          if (usersCount === 0) {
+            await nativeDb.collection('users').insertMany(localDb.users as any);
+          }
+          if (storesCount === 0 && localDb.stores.length > 0) {
+            await nativeDb.collection('stores').insertMany(localDb.stores as any);
+            if (localDb.categories.length > 0) {
+              await nativeDb.collection('categories').insertMany(localDb.categories as any);
+            }
+            if (localDb.products.length > 0) {
+              await nativeDb.collection('products').insertMany(localDb.products as any);
+            }
+          }
+          const plansCount = await nativeDb.collection('plans').countDocuments();
+          if (plansCount === 0 && initialData.initialPlans.length > 0) {
             await nativeDb.collection('plans').insertMany(initialData.initialPlans as any);
           }
-          await nativeDb.collection('settings').insertOne(initialData.initialSettings as any);
-          console.log(`[MongoDB] Auto-seed complete.`);
+          const settingsCount = await nativeDb.collection('settings').countDocuments();
+          if (settingsCount === 0) {
+            await nativeDb.collection('settings').insertOne(initialData.initialSettings as any);
+          }
+          console.log(`[MongoDB] Auto-seed complete in "${DB_NAME}".`);
         }
       } catch (seedErr) {
         console.warn('[MongoDB] Auto-seed check failed:', seedErr);
