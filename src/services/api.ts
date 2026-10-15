@@ -11,8 +11,22 @@ function formatBaseUrl(raw: string): string {
   return `https://${trimmed}`;
 }
 
+function detectBaseUrl(): string {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) {
+    return formatBaseUrl(String(import.meta.env.VITE_API_URL));
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // When deployed on Render as static site (e.g. shop-pos-owner.onrender.com) without VITE_API_URL
+    if (host.includes('onrender.com') && host.includes('-owner')) {
+      return `https://${host.replace('-owner', '-backend')}`;
+    }
+  }
+  return '';
+}
+
 // Support Render / standalone deployment where backend is on a separate domain
-const API_BASE_URL = formatBaseUrl(typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL ? String(import.meta.env.VITE_API_URL) : '');
+const API_BASE_URL = detectBaseUrl();
 
 export function getApiBaseUrl(): string {
   return API_BASE_URL;

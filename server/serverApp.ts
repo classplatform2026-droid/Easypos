@@ -17,7 +17,8 @@ export async function startServer() {
   console.log('[ShopPOS Server] Initializing Socket.IO realtime connection engine...');
   initSocketIO(httpServer);
 
-  const PORT = process.env.RENDER ? parseInt(process.env.PORT || '3000', 10) : 3000;
+  const isAiStudio = Boolean(process.env.APPLET_ID || process.env.DEFAULT_APP_PORT);
+  const PORT = isAiStudio ? 3000 : parseInt(process.env.PORT || '3000', 10);
   const isProd = process.env.NODE_ENV === 'production';
 
   const corsMiddleware = cors({

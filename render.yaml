@@ -1,10 +1,10 @@
 services:
-  # 1. Backend API + Realtime Socket Service
+  # 1. Backend API + Full-Stack Service (Express + Socket.IO + Vite Static)
   - type: web
     name: shop-pos-backend
     runtime: node
     plan: free
-    buildCommand: npm install --legacy-peer-deps
+    buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npx tsx server.ts
     healthCheckPath: /api/health
     envVars:
@@ -15,7 +15,9 @@ services:
       - key: ALLOWED_ORIGINS
         value: "*"
       - key: MONGODB_URI
-        sync: false # Set your MongoDB Atlas connection string in Render dashboard
+        value: mongodb+srv://mdmutasimbillahsaad_db_user:QGSKlkxhnhkPJwFz@cluster0.j29uko9.mongodb.net/shopdb?appName=Cluster0
+      - key: MONGODB_DB_NAME
+        value: shopdb
 
   # 2. Owner POS Frontend (Static Site)
   - type: web
