@@ -87,9 +87,13 @@ export async function startServer() {
   });
 
   if (!isProd) {
-    console.log('[ShopPOS Server] Attaching Vite development middleware...');
+    const isHmrDisabled = process.env.DISABLE_HMR === 'true';
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: isHmrDisabled ? false : { server: httpServer },
+        watch: isHmrDisabled ? null : {},
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
