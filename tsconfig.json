@@ -25,5 +25,5 @@
     "noEmit": true
   },
   "include": ["src", "server", "server.ts", "vite.config.ts"],
-  "exclude": ["node_modules", "dist", "Shop pos"]
+  "exclude": ["node_modules", "dist"]
 }

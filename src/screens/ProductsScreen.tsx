@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ChevronUp,
   Barcode,
+  ScanLine,
+  Camera,
   ShieldAlert,
   TrendingUp,
   TrendingDown,
@@ -25,6 +27,7 @@ import { usePos } from '../context/PosContext';
 import { ProductThumb } from '../components/ProductThumb';
 import { Product } from '../types';
 import { PRODUCT_ICON_OPTIONS, ProductIconOption } from '../data/productIcons';
+import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 
 const COMMON_UNITS = ['Pcs', 'Kg', 'Gram', 'Ltr', 'Packet', 'Box', 'Dozen', 'Pair'];
 
@@ -100,12 +103,26 @@ export const ProductsScreen: React.FC = () => {
   const [formThreshold, setFormThreshold] = useState('5');
   const [imageUploadLoading, setImageUploadLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleScanBarcodeSuccess = (scannedBarcode: string) => {
+    const cleaned = scannedBarcode.trim();
+    setFormBarcode(cleaned);
+    showToast(`বারকোড "${cleaned}" সফলভাবে যুক্ত হয়েছে!`);
+  };
+
+  const handleGenerateRandomBarcode = () => {
+    const randomDigits = Math.floor(100000 + Math.random() * 900000);
+    const newCode = `890103${randomDigits}`;
+    setFormBarcode(newCode);
+    showToast(`নতুন বারকোড তৈরি হয়েছে: ${newCode}`);
   };
 
   const allCategories = useMemo(() => {
@@ -1121,26 +1138,67 @@ export const ProductsScreen: React.FC = () => {
                 </div>
               </div>
 
-              {/* STOCK QUANTITY */}
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Stock Quantity (মজুদ সংখ্যা) *
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formStock}
-                  onChange={(e) => setFormStock(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-semibold"
-                />
+              {/* STOCK QUANTITY & PRODUCT BARCODE */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Stock Quantity (মজুদ সংখ্যা) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formStock}
+                    onChange={(e) => setFormStock(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                      <Barcode className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Barcode (বারকোড)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateRandomBarcode}
+                      className="text-[10px] font-bold text-slate-500 hover:text-blue-600 flex items-center gap-0.5 cursor-pointer"
+                      title="অটো বারকোড তৈরি করুন"
+                    >
+                      <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+                      <span>Auto Code</span>
+                    </button>
+                  </div>
+
+                  <div className="relative flex items-center">
+                    <Barcode className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={formBarcode}
+                      onChange={(e) => setFormBarcode(e.target.value)}
+                      placeholder="Type or scan barcode..."
+                      className="w-full pl-9 pr-18 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                    {/* Barcode Reader Icon Button right beside barcode input */}
+                    <button
+                      type="button"
+                      onClick={() => setBarcodeModalOpen(true)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg flex items-center gap-1 text-[11px] font-bold shadow-2xs transition-all cursor-pointer"
+                      title="Open Barcode Reader (বারকোড রিডার দিয়ে স্ক্যান করুন)"
+                    >
+                      <ScanLine className="w-3.5 h-3.5" />
+                      <span>Scan</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* COLLAPSIBLE MORE OPTIONS (BUYING PRICE, BARCODE, UNIT) */}
+              {/* COLLAPSIBLE MORE OPTIONS (BUYING PRICE, UNIT, THRESHOLD) */}
               <div className="pt-1">
                 <button
                   type="button"
                   onClick={() => setShowMoreOptions(!showMoreOptions)}
-                  className="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors"
+                  className="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   {showMoreOptions ? (
                     <>
@@ -1150,14 +1208,14 @@ export const ProductsScreen: React.FC = () => {
                   ) : (
                     <>
                       <ChevronDown className="w-3.5 h-3.5" />
-                      <span>More options (Cost Price, Unit, Barcode)</span>
+                      <span>More options (Cost Price, Unit, Low Stock Alert)</span>
                     </>
                   )}
                 </button>
 
                 {showMoreOptions && (
                   <div className="mt-3 p-3.5 bg-slate-50/60 border border-slate-200/80 rounded-2xl space-y-3 animate-in fade-in duration-150">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="text-[11px] font-bold text-slate-600 block mb-1">
                           Buying Cost ({storeInfo.currency})
@@ -1168,7 +1226,7 @@ export const ProductsScreen: React.FC = () => {
                           min="0"
                           value={formCostPrice}
                           onChange={(e) => setFormCostPrice(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-mono font-semibold"
                         />
                       </div>
                       <div>
@@ -1187,20 +1245,16 @@ export const ProductsScreen: React.FC = () => {
                           ))}
                         </select>
                       </div>
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                        Barcode
-                      </label>
-                      <div className="relative">
-                        <Barcode className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                          Low Stock Alert
+                        </label>
                         <input
-                          type="text"
-                          value={formBarcode}
-                          onChange={(e) => setFormBarcode(e.target.value)}
-                          placeholder="Barcode number"
-                          className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                          type="number"
+                          min="0"
+                          value={formThreshold}
+                          onChange={(e) => setFormThreshold(e.target.value)}
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-mono font-semibold"
                         />
                       </div>
                     </div>
@@ -1482,6 +1536,17 @@ export const ProductsScreen: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* PRODUCT ENTRY BARCODE SCANNER MODAL */}
+      {barcodeModalOpen && (
+        <BarcodeScannerModal
+          mode="entry"
+          title="Product Barcode Reader (পণ্য বারকোড স্ক্যানার)"
+          initialBarcode={formBarcode}
+          onClose={() => setBarcodeModalOpen(false)}
+          onScan={handleScanBarcodeSuccess}
+        />
       )}
     </div>
   );

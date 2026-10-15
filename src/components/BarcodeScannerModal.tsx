@@ -9,8 +9,7 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
-  ShoppingBag,
-  Volume2,
+  ScanLine,
 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { usePos } from '../context/PosContext';
@@ -18,15 +17,25 @@ import { Product } from '../types';
 import { ProductThumb } from './ProductThumb';
 import { playSound } from '../utils/sound';
 
-interface BarcodeScannerModalProps {
+export interface BarcodeScannerModalProps {
   onClose: () => void;
+  onScan?: (barcode: string) => void;
+  mode?: 'cart' | 'entry';
+  title?: string;
+  initialBarcode?: string;
 }
 
-export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClose }) => {
+export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
+  onClose,
+  onScan,
+  mode = 'cart',
+  title,
+  initialBarcode = '',
+}) => {
   const { products, addToCart, storeInfo } = usePos();
   const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
-  const [manualCode, setManualCode] = useState('');
-  
+  const [manualCode, setManualCode] = useState(initialBarcode);
+
   // Camera scanning states
   const [cameraPermission, setCameraPermission] = useState<'pending' | 'granted' | 'denied'>('pending');
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -34,7 +43,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
 
   // Currently scanned/detected product state
-  const [scannedCode, setScannedCode] = useState<string | null>(null);
+  const [scannedCode, setScannedCode] = useState<string | null>(initialBarcode || null);
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [scanQuantity, setScanQuantity] = useState<number>(1);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -58,17 +67,47 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
 
   // Process detected barcode from camera or manual
   const handleBarcodeDetected = (decodedText: string) => {
+    const cleanCode = decodedText.trim();
+    if (!cleanCode) return;
+
     const now = Date.now();
     // Prevent duplicate triggers within 1.5 seconds if same code
-    if (decodedText === scannedCode && now - lastScannedTime < 1500) {
+    if (cleanCode === scannedCode && now - lastScannedTime < 1500) {
       return;
     }
 
     setLastScannedTime(now);
-    setScannedCode(decodedText);
+    setScannedCode(cleanCode);
     playSound('beep');
 
-    const matched = findProductByCode(decodedText);
+    const matched = findProductByCode(cleanCode);
+
+    if (mode === 'entry') {
+      if (matched) {
+        setFeedback({
+          type: 'info',
+          message: `বারকোড রিড সফল: "${cleanCode}" (বিদ্যমান পণ্য: "${matched.name}")`,
+        });
+      } else {
+        setFeedback({
+          type: 'success',
+          message: `বারকোড রিড সফল: "${cleanCode}"! পণ্য এন্ট্রি ফিল্ডে যুক্ত করা হয়েছে।`,
+        });
+      }
+
+      // Automatically apply to product entry field and close modal after brief feedback
+      if (onScan) {
+        setTimeout(() => {
+          if (isComponentMounted.current) {
+            onScan(cleanCode);
+            onClose();
+          }
+        }, 750);
+      }
+      return;
+    }
+
+    // Default: POS cart mode
     if (matched) {
       setScannedProduct(matched);
       setScanQuantity(1);
@@ -80,7 +119,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
       setScannedProduct(null);
       setFeedback({
         type: 'error',
-        message: `বারকোড "${decodedText}" দিয়ে কোনো পণ্য পাওয়া যায়নি। ম্যানুয়ালি চেক করুন বা অন্য বারকোড স্ক্যান করুন।`,
+        message: `বারকোড "${cleanCode}" দিয়ে কোনো পণ্য পাওয়া যায়নি। ম্যানুয়ালি চেক করুন বা অন্য বারকোড স্ক্যান করুন।`,
       });
     }
   };
@@ -226,11 +265,31 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
     }, 1200);
   };
 
+  const handleApplyToProductEntry = (codeToApply?: string) => {
+    const code = (codeToApply || scannedCode || manualCode).trim();
+    if (!code) return;
+    playSound('beep');
+    if (onScan) {
+      onScan(code);
+    }
+    onClose();
+  };
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualCode.trim()) return;
-    handleBarcodeDetected(manualCode.trim());
-    setManualCode('');
+    if (mode === 'entry') {
+      handleApplyToProductEntry(manualCode.trim());
+    } else {
+      handleBarcodeDetected(manualCode.trim());
+      setManualCode('');
+    }
+  };
+
+  const handleGenerateRandomCode = () => {
+    const randomCode = `890103${Math.floor(100000 + Math.random() * 900000)}`;
+    setManualCode(randomCode);
+    handleBarcodeDetected(randomCode);
   };
 
   return (
@@ -241,12 +300,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
         <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
-              <Barcode className="w-5 h-5" />
+              <ScanLine className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-extrabold text-sm sm:text-base text-white tracking-tight">
-                  Barcode Scanner (বারকোড রিডার)
+                  {title || (mode === 'entry' ? 'Product Barcode Reader (পণ্য বারকোড স্ক্যানার)' : 'Barcode Scanner (বারকোড রিডার)')}
                 </h3>
                 {isScanning && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
@@ -256,11 +315,14 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
                 )}
               </div>
               <p className="text-[11px] text-slate-300">
-                ক্যামেরার সামনে বারকোড আনলে অটো রিড হবে এবং নিচে অ্যাড বাটন আসবে
+                {mode === 'entry'
+                  ? 'পণ্যের গায়ের বারকোড ক্যামেরার সামনে ধরুন, অটো রিড হয়ে ফর্মে যুক্ত হবে'
+                  : 'ক্যামেরার সামনে বারকোড আনলে অটো রিড হবে এবং নিচে অ্যাড বাটন আসবে'}
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
           >
@@ -280,7 +342,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
             }`}
           >
             <Camera className="w-4 h-4" />
-            <span>ক্যামেরা রিডার (Auto Read)</span>
+            <span>ক্যামেরা রিডার (Camera Auto Read)</span>
           </button>
           <button
             type="button"
@@ -292,7 +354,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
             }`}
           >
             <Barcode className="w-4 h-4" />
-            <span>ম্যানুয়াল বা ডেমো বারকোড</span>
+            <span>ম্যানুয়াল বা ডেমো কোড</span>
           </button>
         </div>
 
@@ -318,7 +380,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
                       <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent absolute top-1/2 -translate-y-1/2 animate-pulse" />
                     </div>
                     <span className="mt-3 px-3 py-1 rounded-full bg-slate-900/80 text-white text-[11px] font-semibold border border-white/20 backdrop-blur-xs">
-                      বারকোডটি ফ্রেমের মাঝে রাখুন
+                      {mode === 'entry' ? 'পণ্যের বারকোডটি ফ্রেমের মাঝে ধরুন' : 'বারকোডটি ফ্রেমের মাঝে রাখুন'}
                     </span>
                   </div>
                 )}
@@ -376,35 +438,55 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
                     placeholder="বারকোড বা SKU নম্বর টাইপ করুন..."
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono font-bold"
                   />
                 </div>
                 <button
                   type="submit"
                   className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
                 >
-                  খুঁজুন
+                  {mode === 'entry' ? 'ব্যবহার করুন' : 'খুঁজুন'}
                 </button>
               </form>
 
-              {/* Quick sample barcodes */}
-              <div>
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                  কুইক ক্লিক করুন (স্টোর প্রোডাক্টস):
+              {/* Quick actions for entry mode */}
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  {mode === 'entry' ? 'দ্রুত বারকোড নির্বাচন:' : 'কুইক ক্লিক করুন (স্টোর প্রোডাক্টস):'}
                 </span>
-                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
-                  {products.slice(0, 8).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => handleBarcodeDetected(p.barcode || p.sku)}
-                      className="p-2 border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 text-left transition-colors flex flex-col cursor-pointer"
-                    >
-                      <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
-                      <span className="text-[10px] font-mono text-blue-600 font-semibold">{p.barcode || p.sku}</span>
-                    </button>
-                  ))}
-                </div>
+                {mode === 'entry' && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateRandomCode}
+                    className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200/60 transition-colors cursor-pointer"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>Auto Generate Code</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Quick sample barcodes */}
+              <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
+                {products.slice(0, 8).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      const code = p.barcode || p.sku;
+                      if (mode === 'entry') {
+                        setManualCode(code);
+                        handleBarcodeDetected(code);
+                      } else {
+                        handleBarcodeDetected(code);
+                      }
+                    }}
+                    className="p-2 border border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50/50 text-left transition-colors flex flex-col cursor-pointer"
+                  >
+                    <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
+                    <span className="text-[10px] font-mono text-blue-600 font-semibold">{p.barcode || p.sku}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -431,8 +513,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
             </div>
           )}
 
-          {/* Scanned product detected card */}
-          {scannedProduct && (
+          {/* Scanned product detected card (POS cart mode) */}
+          {mode === 'cart' && scannedProduct && (
             <div className="p-3.5 bg-slate-50 border border-blue-200 rounded-2xl flex items-center justify-between gap-3 shadow-2xs animate-in zoom-in-95 duration-150">
               <div className="flex items-center gap-3 min-w-0">
                 <ProductThumb
@@ -485,9 +567,37 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
               </div>
             </div>
           )}
+
+          {/* Scanned code summary card for entry mode */}
+          {mode === 'entry' && scannedCode && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3 shadow-2xs animate-in zoom-in-95 duration-150">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                  <Check className="w-4 h-4 stroke-[3]" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider block">
+                    চিহ্নিত বারকোড (Detected Barcode)
+                  </span>
+                  <span className="font-mono text-sm font-black text-slate-900 tracking-wider">
+                    {scannedCode}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleApplyToProductEntry(scannedCode)}
+                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>যুক্ত করুন</span>
+                <Check className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Footer with Add to Cart and Close Buttons */}
+        {/* Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
           <button
             type="button"
@@ -497,17 +607,33 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({ onClos
             বন্ধ করুন (Close)
           </button>
 
-          <button
-            type="button"
-            disabled={!scannedProduct || scannedProduct.stock <= 0}
-            onClick={handleAddToCart}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-extrabold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>
-              {scannedProduct ? `কার্টে যোগ করুন (${storeInfo.currency} ${scannedProduct.price * scanQuantity})` : 'কার্টে যোগ করুন (Add to Cart)'}
-            </span>
-          </button>
+          {mode === 'entry' ? (
+            <button
+              type="button"
+              disabled={!scannedCode && !manualCode.trim()}
+              onClick={() => handleApplyToProductEntry()}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-extrabold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <Check className="w-4 h-4 stroke-[3]" />
+              <span>
+                {(scannedCode || manualCode.trim())
+                  ? `বারকোড যুক্ত করুন (${scannedCode || manualCode.trim()})`
+                  : 'বারকোড নির্বাচন করুন'}
+              </span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!scannedProduct || scannedProduct.stock <= 0}
+              onClick={handleAddToCart}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-xs font-extrabold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>
+                {scannedProduct ? `কার্টে যোগ করুন (${storeInfo.currency} ${scannedProduct.price * scanQuantity})` : 'কার্টে যোগ করুন (Add to Cart)'}
+              </span>
+            </button>
+          )}
         </div>
 
       </div>
