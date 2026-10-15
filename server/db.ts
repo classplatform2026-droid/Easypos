@@ -18,40 +18,61 @@ import { cache } from './cache';
 
 const RAW_MONGODB_URI = process.env.MONGODB_URI || '';
 
-export function parseMongoConfig(rawUri: string, defaultDb = 'shopdb'): { uri: string; dbName: string } {
+export function parseMongoConfig(rawUri: string, defaultDb = 'posdb'): { uri: string; dbName: string } {
   let uri = (rawUri || '').trim();
   if (!uri) return { uri: '', dbName: defaultDb };
 
-  let dbName = process.env.MONGODB_DB_NAME || defaultDb;
+  let dbName = process.env.MONGODB_DB_NAME || '';
 
-  // Handle format: mongodb+srv://...net/?appName=Cluster0/shopdb
-  if (uri.includes('/?appName=') && uri.includes('/')) {
-    const parts = uri.split('/?');
-    if (parts.length === 2 && parts[1].includes('/')) {
-      const sub = parts[1].split('/');
-      const query = sub[0];
-      const specifiedDb = sub.slice(1).join('/');
-      if (specifiedDb) {
-        dbName = specifiedDb;
-        uri = `${parts[0]}/${specifiedDb}?${query}`;
-      }
-    }
-  } else {
-    try {
-      const proto = uri.startsWith('mongodb+srv://') ? 'mongodb+srv://' : 'mongodb://';
-      const dummy = uri.replace(proto, 'http://');
-      const parsed = new URL(dummy);
-      const pathDb = parsed.pathname.replace(/^\//, '').trim();
-      if (pathDb) {
-        dbName = pathDb;
-      }
-    } catch {}
+  // Handle case where database name is appended after query params, e.g. /?appName=Cluster0/posdb or &appName=Cluster0/posdb
+  const trailingSlashDbMatch = uri.match(/[?&][^?]*\/([a-zA-Z0-9_\-]+)$/);
+  if (trailingSlashDbMatch && trailingSlashDbMatch[1]) {
+    const extractedDb = trailingSlashDbMatch[1];
+    dbName = dbName || extractedDb;
+    uri = uri.slice(0, uri.length - (extractedDb.length + 1));
   }
 
-  return { uri, dbName };
+  const isSrv = uri.startsWith('mongodb+srv://');
+  const isStandard = uri.startsWith('mongodb://');
+  if (isSrv || isStandard) {
+    try {
+      const proto = isSrv ? 'mongodb+srv://' : 'mongodb://';
+      const withoutProto = uri.slice(proto.length);
+      const [authorityAndPath, queryString] = withoutProto.split('?');
+      const firstSlash = authorityAndPath.indexOf('/');
+
+      let authority = authorityAndPath;
+      let pathDb = '';
+      if (firstSlash !== -1) {
+        authority = authorityAndPath.slice(0, firstSlash);
+        pathDb = authorityAndPath.slice(firstSlash + 1).replace(/\/+$/, '').trim();
+      }
+
+      if (pathDb && !pathDb.includes('?') && !pathDb.includes('&')) {
+        dbName = dbName || pathDb;
+      }
+
+      const finalDb = dbName || defaultDb;
+      const queryParams = new URLSearchParams(queryString || '');
+      if (!queryParams.has('retryWrites')) {
+        queryParams.set('retryWrites', 'true');
+      }
+      if (!queryParams.has('w')) {
+        queryParams.set('w', 'majority');
+      }
+
+      const qs = queryParams.toString();
+      uri = `${proto}${authority}/${finalDb}${qs ? `?${qs}` : ''}`;
+      return { uri, dbName: finalDb };
+    } catch {
+      // fallback to original uri
+    }
+  }
+
+  return { uri, dbName: dbName || defaultDb };
 }
 
-const { uri: MONGODB_URI, dbName: DB_NAME } = parseMongoConfig(RAW_MONGODB_URI);
+let { uri: MONGODB_URI, dbName: DB_NAME } = parseMongoConfig(RAW_MONGODB_URI);
 
 export function buildIdQuery(id: string | any) {
   if (!id) return { _id: id };
@@ -717,14 +738,21 @@ export async function resetDatabaseToCleanSeed() {
 export async function initDatabase() {
   const initialData = await seedInitialData();
 
+  const currentRawUri = process.env.MONGODB_URI || RAW_MONGODB_URI;
+  if (currentRawUri && currentRawUri.trim()) {
+    const config = parseMongoConfig(currentRawUri, 'posdb');
+    MONGODB_URI = config.uri;
+    DB_NAME = config.dbName;
+  }
+
   if (MONGODB_URI && MONGODB_URI.startsWith('mongodb')) {
     try {
-      console.log(`[MongoDB] Attempting connection to MongoDB URI...`);
+      console.log(`[MongoDB] Attempting connection to MongoDB database: "${DB_NAME}"...`);
       mongoClient = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 4000,
-        connectTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 3000,
+        connectTimeoutMS: 4000,
         maxPoolSize: 50,
-        minPoolSize: 5,
+        minPoolSize: 1,
         maxIdleTimeMS: 30000,
       });
       await mongoClient.connect();

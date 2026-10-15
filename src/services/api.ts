@@ -121,10 +121,26 @@ async function request<T>(endpoint: string, options: RequestInit = {}, ttlMs = 0
   const fetchPromise = (async () => {
     clientMisses++;
     const targetUrl = resolveApiUrl(endpoint);
-    const res = await fetch(targetUrl, {
-      ...options,
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(targetUrl, {
+        ...options,
+        headers,
+      });
+    } catch (networkErr: any) {
+      console.warn(`[API] Network error fetching ${targetUrl}:`, networkErr);
+      const isRenderSpinUp = targetUrl.includes('onrender.com');
+      const msg = isRenderSpinUp
+        ? 'Backend server is waking up or unreachable. Please wait 15-30 seconds and retry.'
+        : (networkErr.message?.includes('Failed to fetch')
+          ? 'Cannot connect to backend server. Please verify backend URL and MongoDB status.'
+          : (networkErr.message || 'Network connection failed.'));
+      const err = new Error(msg);
+      (err as any).code = 'NETWORK_ERROR';
+      (err as any).status = 0;
+      (err as any).originalError = networkErr;
+      throw err;
+    }
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ error: `Request failed with status ${res.status}` }));

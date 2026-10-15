@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
@@ -10,9 +11,6 @@ import { posRouter } from './routes/posRoutes';
 import { adminRouter } from './routes/adminRoutes';
 
 export async function startServer() {
-  console.log('[ShopPOS Server] Initializing MongoDB persistence & collections...');
-  await initDatabase();
-
   const app = express();
   const httpServer = http.createServer(app);
 
@@ -21,34 +19,19 @@ export async function startServer() {
 
   const PORT = parseInt(process.env.PORT || '3000', 10);
   const isProd = process.env.NODE_ENV === 'production';
-  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS;
-
-  const originHandler = (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) => {
-    if (!origin) return callback(null, true);
-    if (allowedOriginsEnv && allowedOriginsEnv !== '*') {
-      const list = allowedOriginsEnv.split(',').map((s) => s.trim());
-      if (list.includes(origin)) {
-        return callback(null, true);
-      }
-    }
-    return callback(null, true);
-  };
 
   app.use(
     cors({
-      origin: originHandler,
+      origin: true,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     })
   );
+  app.options('*', cors());
 
   app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     next();
@@ -107,6 +90,12 @@ export async function startServer() {
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`[ShopPOS Server] Serving POS web app with Realtime WebSockets at http://0.0.0.0:${PORT}`);
+  });
+
+  console.log('[ShopPOS Server] Initializing MongoDB persistence & collections...');
+  await initDatabase().catch((err) => {
+    console.warn('[ShopPOS Server] Database initialization notice:', err);
+  });
 
     // Recurring auto-purge: purge audit & system events older than 90 days every 24 hours
     const PURGE_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -117,7 +106,6 @@ export async function startServer() {
         console.warn('[AuditPurge] Error during periodic 90-day audit purge:', err);
       }
     }, PURGE_INTERVAL_MS);
-  });
 
   const handleExit = () => {
     console.log('[ShopPOS Server] Received exit signal, closing server gracefully...');
